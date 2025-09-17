@@ -1,0 +1,25 @@
+{
+  "name": "Bus-Raahi",
+  "short_name": "Bus-Raahi",
+  "description": "Real-time bus tracking and passenger management system",
+  "start_url": "/mobile-app-preview.html",
+  "display": "standalone",
+  "background_color": "#059669",
+  "theme_color": "#059669",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiByeD0iNDgiIGZpbGw9IiNmZmZmZmYiLz4KPHBhdGggZD0iTTQ4IDQ4SDE0NFYxNDRINDBWNDhaIiBzdHJva2U9IiMwNTk2NjkiIHN0cm9rZS13aWR0aD0iNiIgZmlsbD0ibm9uZSIvPgo8cGF0aCBkPSJNNzIgNzJIMTIwVjEyMEg3MlY3MloiIGZpbGw9IiMwNTk2NjkiLz4KPHBhdGggZD0iTTcyIDEyMEgxMjBWMTY4SDcyVjEyMFoiIGZpbGw9IiMwNTk5NjY5Ii8+Cjwvc3ZnPgo=",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiByeD0iMTI4IiBmaWxsPSIjZmZmZmZmIi8+CjxwYXRoIGQ9Ik0xMjggMTI4SDM4NFYzODRIMTI4VjEyOFoiIHN0cm9rZT0iIzA1OTY2OSIgc3Ryb2tlLXdpZHRoPSIxNiIgZmlsbD0ibm9uZSIvPgo8cGF0aCBkPSJNMTkyIDE5MkgzMjBWMzIwSDE5MlYxOTJaIiBmaWxsPSIjMDU5NjY5Ii8+CjxwYXRoIGQ9Ik0xOTIgMzIwSDMyMFY0NDhIMTkyVjMyMFoiIGZpbGw9IiMwNTk5NjY5Ii8+Cjwvc3ZnPgo=",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ],
+  "categories": ["transportation", "travel", "utilities"],
+  "lang": "en",
+  "dir": "ltr"
+}

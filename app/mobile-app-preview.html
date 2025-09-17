@@ -1,0 +1,4384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bus-Raahi - Real-time Bus Tracking Web App</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="description" content="Real-time bus tracking and passenger management system">
+    <meta name="theme-color" content="#059669">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Bus-Raahi">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="./manifest.json">
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCIgdmlld0JveD0iMCAwIDE4MCAxODAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxODAiIGhlaWdodD0iMTgwIiByeD0iNDUiIGZpbGw9IiNmZmZmZmYiLz4KPHBhdGggZD0iTTQ1IDQ1SDEzNVYxMzVINDBWNDVaIiBzdHJva2U9IiMwNTk2NjkiIHN0cm9rZS13aWR0aD0iNSIgZmlsbD0ibm9uZSIvPgo8cGF0aCBkPSJNNjcuNSA2Ny41SDEyMi41VjExMi41SDY3LjVWNjcuNVoiIGZpbGw9IiMwNTk2NjkiLz4KPHBhdGggZD0iTTY3LjUgMTEyLjVIMTIyLjVWMTU3LjVINjcuNVYxMTIuNVoiIGZpbGw9IiMwNTk5NjY5Ii8+Cjwvc3ZnPgo=">
+    <meta name="description" content="Bus-Raahi - Real-time bus tracking and passenger management system">
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    
+    <!-- Google Maps API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDtEnjEnVHpgxGTopVUfrGD4QaVtqxLJGw&libraries=places,geometry&callback=initGoogleMap" async defer></script>
+    
+    <!-- Leaflet.js for OpenStreetMap -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: #111827;
+            min-height: 100vh;
+            padding: 0;
+            margin: 0;
+            transition: all 0.3s ease;
+        }
+
+        /* Web App Container */
+        .web-app-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Responsive Grid Layout */
+        .app-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            padding: 20px;
+            flex: 1;
+        }
+
+        @media (min-width: 768px) {
+            .app-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 30px;
+                padding: 30px;
+            }
+        }
+
+        @media (min-width: 1200px) {
+            .app-grid {
+                grid-template-columns: 1fr 2fr;
+                gap: 40px;
+                padding: 40px;
+            }
+        }
+
+        /* Web App Header */
+        .web-app-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+            padding: 16px 0;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+        }
+
+        .header-text h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 700;
+            color: #059669;
+        }
+
+        .header-text p {
+            margin: 0;
+            font-size: 14px;
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .app-main {
+            flex: 1;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        @media (min-width: 768px) {
+            .header-content {
+                padding: 0 30px;
+            }
+            .header-text h1 {
+                font-size: 28px;
+            }
+            .app-main {
+                padding: 30px;
+            }
+            .screen {
+                min-height: 70vh;
+                margin-bottom: 30px;
+            }
+        }
+
+        @media (min-width: 1200px) {
+            .header-content {
+                padding: 0 40px;
+            }
+            .header-text h1 {
+                font-size: 32px;
+            }
+            .app-main {
+                padding: 40px;
+            }
+            .screen {
+                min-height: 60vh;
+                margin-bottom: 40px;
+            }
+        }
+
+        /* Extra responsive design for all devices */
+        @media (max-width: 480px) {
+            .app-main {
+                padding: 10px;
+            }
+            
+            .web-app-header {
+                padding: 12px 0;
+                background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+            }
+            
+            .header-content {
+                padding: 0 15px;
+            }
+            
+            .header-text h1 {
+                font-size: 20px;
+                color: white !important;
+            }
+            
+            .header-text p {
+                font-size: 12px;
+                color: rgba(255,255,255,0.9) !important;
+            }
+            
+            .screen {
+                margin-bottom: 15px;
+                border-radius: 12px;
+                background: white !important;
+            }
+            
+            .dashboard-content {
+                padding: 15px;
+            }
+            
+            /* Force light mode colors on mobile */
+            body:not(.dark-mode) {
+                background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+            }
+            
+            body:not(.dark-mode) .screen {
+                background: white !important;
+                color: #111827 !important;
+            }
+            
+            body:not(.dark-mode) .dashboard {
+                background: white !important;
+            }
+            
+            body:not(.dark-mode) .dashboard-header {
+                background: #f8fafc !important;
+                color: #111827 !important;
+            }
+            
+            /* Mobile text colors */
+            body:not(.dark-mode) .dashboard-title {
+                color: #111827 !important;
+            }
+            
+            body:not(.dark-mode) .dashboard-subtitle {
+                color: #6b7280 !important;
+            }
+            
+            body:not(.dark-mode) .section-title {
+                color: #111827 !important;
+            }
+            
+            body:not(.dark-mode) .btn {
+                background: #059669 !important;
+                color: white !important;
+            }
+        }
+
+        @media (min-width: 1440px) {
+            .web-app-container {
+                max-width: 1600px;
+            }
+            
+            .app-main {
+                padding: 50px;
+            }
+            
+            #conductor-map {
+                height: 800px !important;
+            }
+            
+            #map {
+                height: 800px !important;
+            }
+            
+            #passenger-map {
+                height: 650px !important;
+            }
+        }
+
+        @media (min-width: 1920px) {
+            .web-app-container {
+                max-width: 1800px;
+            }
+            
+            #conductor-map {
+                height: 900px !important;
+            }
+            
+            #map {
+                height: 900px !important;
+            }
+            
+            #passenger-map {
+                height: 750px !important;
+            }
+        }
+
+        /* Landscape orientation for mobile */
+        @media (max-height: 600px) and (orientation: landscape) {
+            .splash-screen {
+                min-height: 100vh;
+            }
+            
+            .splash-content {
+                padding: 20px;
+            }
+            
+            .splash-app-name {
+                font-size: 32px;
+            }
+            
+            .splash-tagline {
+                font-size: 18px;
+            }
+            
+            .start-button {
+                padding: 12px 24px;
+                font-size: 16px;
+            }
+        }
+
+        /* Touch device optimizations */
+        @media (hover: none) and (pointer: coarse) {
+            .fullscreen-btn {
+                padding: 12px 16px;
+                font-size: 18px;
+            }
+            
+            .btn, .start-button {
+                min-height: 44px;
+                padding: 12px 20px;
+            }
+            
+            .bus-option {
+                padding: 20px;
+                margin-bottom: 20px;
+            }
+            
+            .theme-toggle {
+                top: 70px;
+                right: 15px;
+                width: 48px;
+                height: 48px;
+                font-size: 20px;
+                z-index: 99999;
+                background: rgba(255,255,255,0.95) !important;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+            }
+            
+            body:not(.dark-mode) .theme-toggle {
+                background: rgba(255,255,255,0.95) !important;
+                color: #059669 !important;
+            }
+            
+            body.dark-mode .theme-toggle {
+                background: rgba(31, 41, 55, 0.95) !important;
+                color: #10b981 !important;
+            }
+        }
+
+        /* Back Button Styles */
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 16px;
+            cursor: pointer;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s ease;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .back-button:hover {
+            background: rgba(255, 255, 255, 1);
+            transform: scale(1.05);
+        }
+
+        .back-button:active {
+            transform: scale(0.95);
+        }
+
+        body.dark-mode .back-button {
+            background: rgba(31, 41, 55, 0.9);
+            color: #10b981;
+        }
+
+        body.dark-mode .back-button:hover {
+            background: rgba(31, 41, 55, 1);
+        }
+
+        /* Hide back button on screens where it shouldn't appear */
+        .splash-screen .back-button,
+        .role-selection .back-button {
+            display: none;
+        }
+
+        /* PWA Install Button */
+        .pwa-install-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .pwa-install-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(16, 185, 129, 0.4);
+        }
+
+        .pwa-install-btn:active {
+            transform: translateY(0);
+        }
+
+        .pwa-install-btn.show {
+            display: flex;
+        }
+
+        .pwa-install-btn .install-icon {
+            font-size: 16px;
+        }
+
+        body.dark-mode .pwa-install-btn {
+            background: linear-gradient(135deg, #059669, #047857);
+            box-shadow: 0 4px 20px rgba(5, 150, 105, 0.3);
+        }
+
+        body.dark-mode .pwa-install-btn:hover {
+            box-shadow: 0 6px 25px rgba(5, 150, 105, 0.4);
+        }
+
+        /* Install Instructions Modal */
+        .install-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+
+        .install-modal.show {
+            display: flex;
+        }
+
+        .install-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 400px;
+            margin: 20px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        body.dark-mode .install-content {
+            background: #1f2937;
+            color: white;
+        }
+
+        .install-content h3 {
+            margin: 0 0 20px 0;
+            color: #059669;
+            font-size: 24px;
+        }
+
+        .install-content p {
+            margin: 0 0 20px 0;
+            color: #6b7280;
+            line-height: 1.6;
+        }
+
+        body.dark-mode .install-content p {
+            color: #d1d5db;
+        }
+
+        .install-steps {
+            text-align: left;
+            margin: 20px 0;
+        }
+
+        .install-step {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+            padding: 10px;
+            background: #f3f4f6;
+            border-radius: 10px;
+        }
+
+        body.dark-mode .install-step {
+            background: #374151;
+        }
+
+        .install-step .step-number {
+            background: #059669;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            margin-right: 12px;
+        }
+
+        .close-install-modal {
+            background: #6b7280;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        .close-install-modal:hover {
+            background: #4b5563;
+        }
+        
+        body.dark-mode {
+            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+        }
+
+        body.dark-mode .web-app-container {
+            background: rgba(17, 24, 39, 0.95);
+        }
+
+        body.dark-mode .web-app-header {
+            background: rgba(31, 41, 55, 0.95);
+            border-bottom-color: rgba(75, 85, 99, 0.5);
+        }
+
+        body.dark-mode .header-text h1 {
+            color: #10b981;
+        }
+
+        body.dark-mode .header-text p {
+            color: #9ca3af;
+        }
+
+        body.dark-mode .theme-toggle {
+            background: rgba(16, 185, 129, 0.9);
+            color: white;
+        }
+
+        body.dark-mode .theme-toggle:hover {
+            background: rgba(16, 185, 129, 1);
+        }
+        
+        /* Phone container removed - using full web app layout */
+        /*
+        .phone-container {
+            width: 100%;
+            max-width: 400px;
+            height: 100vh;
+            max-height: 900px;
+            background: #2d3748;
+            border-radius: 20px;
+            padding: 6px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+        */
+
+        /*
+        @media (min-width: 768px) {
+            .phone-container {
+                max-width: 450px;
+                border-radius: 25px;
+                padding: 8px;
+            }
+        }
+
+        @media (min-width: 1200px) {
+            .phone-container {
+                max-width: 500px;
+                border-radius: 30px;
+                padding: 10px;
+            }
+        }
+        */
+        
+        /*
+        .phone-screen {
+            width: 100%;
+            height: 100%;
+            background: #059669;
+            border-radius: 32px;
+            overflow: hidden;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        */
+        
+        /*
+        body.dark-mode .phone-screen {
+            background: #111827;
+        }
+        */
+        
+        .status-bar {
+            height: 44px;
+            background: #059669;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        body.dark-mode .status-bar {
+            background: #1f2937;
+        }
+        
+        .theme-toggle {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: rgba(255,255,255,0.95);
+            border: none;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 18px;
+            z-index: 9999;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        .theme-toggle:hover {
+            transform: scale(1.1);
+        }
+        
+        body.dark-mode .theme-toggle {
+            background: rgba(31, 41, 55, 0.9);
+            color: white;
+        }
+        
+        .screen {
+            min-height: 80vh;
+            background: white;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            margin-bottom: 20px;
+        }
+
+        /* Enhanced Splash Screen */
+        .splash-screen {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .splash-content {
+            text-align: center;
+            color: white;
+            max-width: 500px;
+            padding: 40px 20px;
+        }
+
+        .splash-logo {
+            margin-bottom: 30px;
+        }
+
+        .logo-image {
+            width: 120px;
+            height: 120px;
+            border-radius: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            animation: logoFloat 3s ease-in-out infinite;
+        }
+
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .splash-app-name {
+            font-size: 48px;
+            font-weight: 800;
+            margin: 0 0 20px 0;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            letter-spacing: -1px;
+        }
+
+        .splash-tagline {
+            font-size: 24px;
+            font-weight: 500;
+            margin: 0 0 40px 0;
+            opacity: 0.9;
+            min-height: 32px;
+            transition: all 0.5s ease;
+        }
+
+        .start-button {
+            background: white;
+            color: #059669;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            margin-bottom: 40px;
+        }
+
+        .start-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .start-button:active {
+            transform: translateY(0px);
+        }
+
+        .splash-loading {
+            margin-top: 20px;
+        }
+
+        .loading-dots {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .loading-dots span {
+            width: 8px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 50%;
+            animation: loadingDots 1.5s ease-in-out infinite;
+        }
+
+        .loading-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .loading-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes loadingDots {
+            0%, 80%, 100% {
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scale(1.2);
+                opacity: 1;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .splash-app-name {
+                font-size: 56px;
+            }
+            .splash-tagline {
+                font-size: 28px;
+            }
+            .start-button {
+                padding: 20px 40px;
+                font-size: 20px;
+            }
+        }
+
+        @media (min-width: 1200px) {
+            .splash-app-name {
+                font-size: 64px;
+            }
+            .splash-tagline {
+                font-size: 32px;
+            }
+            .logo-image {
+                width: 140px;
+                height: 140px;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .screen {
+                border-radius: 25px;
+            }
+        }
+
+        @media (min-width: 1200px) {
+            .screen {
+                border-radius: 30px;
+            }
+        }
+        
+        body.dark-mode .screen {
+            background: #1f2937;
+            border: 1px solid #374151;
+        }
+
+        body.dark-mode .dashboard {
+            background: #1f2937;
+        }
+
+        body.dark-mode .dashboard-header {
+            background: #374151;
+            color: white;
+        }
+
+        body.dark-mode .dashboard-title {
+            color: #f9fafb;
+        }
+
+        body.dark-mode .dashboard-subtitle {
+            color: #d1d5db;
+        }
+        
+        .screen-content {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        /* Add top padding to screens with back buttons */
+        .screen:not(.splash-screen):not(.role-selection) .screen-content {
+            padding-top: 80px;
+        }
+
+        /* Special padding for dashboard screens */
+        .screen:not(.splash-screen):not(.role-selection) .dashboard {
+            padding-top: 80px;
+        }
+        
+        .logo {
+            width: 120px;
+            height: 120px;
+            background: #fbbf24;
+            border-radius: 50%;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #111827;
+            font-size: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .logo::before {
+            content: "🚌";
+            font-size: 40px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .logo::after {
+            content: "BUS-RAAHI";
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 18px;
+            font-weight: bold;
+            color: #fbbf24;
+            text-shadow: 2px 2px 0px #111827;
+        }
+        
+        .app-title {
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .app-tagline {
+            color: #fbbf24;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+        
+        .app-subtitle {
+            color: rgba(255,255,255,0.8);
+            font-size: 16px;
+            margin-bottom: 40px;
+        }
+        
+        .role-selection {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 100%;
+            max-width: 280px;
+        }
+        
+        .role-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .role-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+        }
+        
+        .role-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            font-size: 40px;
+        }
+        
+        .conductor-icon {
+            background: #1e40af;
+            color: white;
+        }
+        
+        .passenger-icon {
+            background: #059669;
+            color: white;
+        }
+        
+        .role-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #111827;
+            margin-bottom: 8px;
+        }
+        
+        .role-description {
+            color: #6b7280;
+            font-size: 14px;
+            text-align: center;
+        }
+        
+        .form-container {
+            width: 100%;
+            max-width: 320px;
+            background: white;
+            border-radius: 24px;
+            padding: 40px 30px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+        }
+        
+        .form-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #111827;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        .input-field {
+            width: 100%;
+            padding: 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            background: #f9fafb;
+            font-size: 16px;
+            margin-bottom: 16px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: #059669;
+        }
+        
+        .input-field::placeholder {
+            color: #9ca3af;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 12px;
+        }
+        
+        .btn-primary {
+            background: #111827;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #374151;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #111827;
+            border: 2px solid #e5e7eb;
+        }
+        
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+        
+        .dashboard {
+            min-height: 100vh;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+        }
+
+        @media (min-width: 768px) {
+            .dashboard {
+                min-height: 80vh;
+            }
+        }
+
+        @media (min-width: 1200px) {
+            .dashboard {
+                min-height: 70vh;
+            }
+        }
+        
+        body.dark-mode .dashboard {
+            background: #1f2937;
+        }
+        
+        .dashboard-header {
+            background: #111827;
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+        
+        body.dark-mode .dashboard-header {
+            background: #374151;
+        }
+        
+        .dashboard-title {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        
+        .dashboard-subtitle {
+            font-size: 14px;
+            color: #9ca3af;
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #059669;
+        }
+        
+        .dashboard-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        /* Add top padding for dashboard content with back buttons */
+        .screen:not(.splash-screen):not(.role-selection) .dashboard-content {
+            padding-top: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .dashboard-content {
+                padding: 30px;
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+        }
+
+        @media (min-width: 1200px) {
+            .dashboard-content {
+                padding: 40px;
+                grid-template-columns: 1fr 1fr;
+                gap: 30px;
+            }
+        }
+        
+        .section {
+            margin-bottom: 24px;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #111827;
+            margin-bottom: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        body.dark-mode .section-title {
+            color: #f9fafb;
+        }
+        
+        .control-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+        
+        .control-btn {
+            padding: 14px;
+            border-radius: 12px;
+            border: none;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-start { background: #059669; }
+        .btn-end { background: #dc2626; }
+        .btn-reset { background: #6b7280; }
+        
+        .passenger-card {
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            border: 2px solid #e5e7eb;
+            margin-bottom: 20px;
+        }
+        
+        .passenger-count {
+            font-size: 48px;
+            font-weight: bold;
+            color: #059669;
+            margin: 12px 0;
+        }
+        
+        .passenger-controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+        
+        .passenger-btn {
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            color: white;
+            font-weight: 600;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        
+        .btn-remove { background: #dc2626; }
+        .btn-add { background: #059669; }
+        .btn-scan { background: #1e40af; }
+        
+        .stops-list {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .stop-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        
+        .stop-item:last-child {
+            border-bottom: none;
+        }
+        
+        .stop-name {
+            font-weight: 600;
+            color: #111827;
+        }
+        
+        .stop-distance {
+            color: #6b7280;
+            font-size: 14px;
+        }
+        
+        .remove-stop {
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+        }
+        
+        .remove-stop:hover {
+            background: #dc2626;
+        }
+        
+        .add-stop-btn {
+            width: 100%;
+            background: #059669;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .map-container {
+            height: 200px;
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            position: relative;
+        }
+        
+        .map-marker {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #059669;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .search-bar {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .search-input {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 16px;
+        }
+        
+        .bus-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        body.dark-mode .bus-card {
+            background: #374151;
+            color: #f9fafb;
+        }
+        
+        .bus-option {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .bus-option:hover {
+            border-color: #059669;
+            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.1);
+        }
+        
+        .bus-option.selected {
+            border-color: #059669;
+            background: #f0fdf4;
+            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.15);
+        }
+        
+        body.dark-mode .bus-option {
+            background: #374151;
+            border-color: #4b5563;
+            color: #f9fafb;
+        }
+        
+        body.dark-mode .bus-option.selected {
+            background: #064e3b;
+            border-color: #059669;
+        }
+
+        @media (min-width: 768px) {
+            .bus-option {
+                padding: 24px;
+                margin-bottom: 20px;
+            }
+        }
+
+        @media (min-width: 1200px) {
+            .bus-option {
+                padding: 28px;
+                margin-bottom: 24px;
+            }
+        }
+
+        /* Enhanced Conductor Map Container */
+        .conductor-map-container {
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        #conductor-map {
+            transition: height 0.3s ease;
+        }
+
+        @media (min-width: 768px) {
+            #conductor-map {
+                height: 600px !important;
+            }
+        }
+
+        @media (min-width: 1200px) {
+            #conductor-map {
+                height: 700px !important;
+            }
+        }
+
+        /* Enhanced Live Tracking Map */
+        .live-tracking-map {
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        #map {
+            transition: height 0.3s ease;
+        }
+
+        @media (min-width: 768px) {
+            #map {
+                height: 600px !important;
+            }
+        }
+
+        @media (min-width: 1200px) {
+            #map {
+                height: 700px !important;
+            }
+        }
+
+        /* Enhanced Passenger Map */
+        .passenger-map-container {
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        #passenger-map {
+            transition: height 0.3s ease;
+        }
+
+        @media (min-width: 768px) {
+            #passenger-map {
+                height: 450px !important;
+            }
+        }
+
+        @media (min-width: 1200px) {
+            #passenger-map {
+                height: 550px !important;
+            }
+        }
+
+        /* Enhanced QR Ticket Styling */
+        .ticket-details {
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 24px;
+            margin-top: 20px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .ticket-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0 0 8px 0;
+            text-align: center;
+        }
+
+        .ticket-subtitle {
+            color: #64748b;
+            font-size: 16px;
+            margin: 0 0 24px 0;
+            text-align: center;
+        }
+
+        .ticket-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .ticket-info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .info-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .ticket-fare {
+            color: #059669 !important;
+            font-size: 18px !important;
+            font-weight: 700 !important;
+        }
+
+        .ticket-features {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            padding: 16px;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .feature-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .feature-icon {
+            font-size: 24px;
+        }
+
+        .feature-text {
+            font-size: 12px;
+            font-weight: 500;
+            color: #64748b;
+            text-align: center;
+        }
+
+        .ticket-warning {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+        }
+
+        .warning-icon {
+            font-size: 20px;
+        }
+
+        .warning-text {
+            font-size: 14px;
+            font-weight: 600;
+            color: #92400e;
+        }
+
+        /* Ticket section dark mode fixes */
+        body.dark-mode .ticket-details {
+            background: #374151;
+            border: 1px solid #4b5563;
+        }
+
+        body.dark-mode .ticket-title {
+            color: #f9fafb;
+        }
+
+        body.dark-mode .ticket-subtitle {
+            color: #d1d5db;
+        }
+
+        body.dark-mode .ticket-info-grid {
+            background: #ffffff;
+            border: 2px solid #059669;
+        }
+
+        body.dark-mode .info-label {
+            color: #000000 !important;
+            font-weight: 700;
+        }
+
+        body.dark-mode .info-value {
+            color: #000000 !important;
+            font-weight: 800;
+        }
+
+        body.dark-mode .ticket-fare {
+            color: #10b981 !important;
+            font-weight: 700;
+        }
+
+        body.dark-mode .ticket-features {
+            background: #ffffff;
+            border: 2px solid #059669;
+        }
+
+        body.dark-mode .feature-text {
+            color: #000000 !important;
+            font-weight: 700;
+        }
+
+        body.dark-mode .ticket-warning {
+            background: #7c2d12;
+            border: 1px solid #dc2626;
+        }
+
+        body.dark-mode .warning-text {
+            color: #fef2f2;
+        }
+
+        .scanner-option {
+            margin-top: 20px;
+        }
+
+        .scanner-toggle {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: #f1f5f9;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .scanner-toggle:hover {
+            background: #e2e8f0;
+        }
+
+        .toggle-text {
+            font-size: 14px;
+            font-weight: 500;
+            color: #475569;
+        }
+
+        @media (min-width: 768px) {
+            .ticket-info-grid {
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 20px;
+            }
+            
+            .ticket-features {
+                justify-content: space-evenly;
+                padding: 20px;
+            }
+        }
+
+        /* Fullscreen Button */
+        .fullscreen-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 16px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            transition: all 0.2s ease;
+            z-index: 10;
+        }
+
+        .fullscreen-btn:hover {
+            background: rgba(255, 255, 255, 1);
+            transform: scale(1.05);
+        }
+
+        .fullscreen-btn:active {
+            transform: scale(0.95);
+        }
+
+        body.dark-mode .fullscreen-btn {
+            background: rgba(31, 41, 55, 0.9);
+            color: #10b981;
+        }
+
+        body.dark-mode .fullscreen-btn:hover {
+            background: rgba(31, 41, 55, 1);
+        }
+
+        /* Fullscreen Map Styles */
+        .map-fullscreen {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 9999 !important;
+            background: white !important;
+            border-radius: 0 !important;
+            opacity: 1 !important;
+        }
+
+        body.dark-mode .map-fullscreen {
+            background: #1f2937 !important;
+        }
+
+        /* Remove overlay completely - no blur */
+        .fullscreen-overlay {
+            display: none !important;
+        }
+
+        /* Close button styles */
+        .fullscreen-close-btn {
+            position: fixed !important;
+            top: 20px !important;
+            right: 20px !important;
+            background: rgba(255, 255, 255, 0.95) !important;
+            border: none !important;
+            border-radius: 50% !important;
+            width: 50px !important;
+            height: 50px !important;
+            font-size: 20px !important;
+            cursor: pointer !important;
+            z-index: 10000 !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            transition: all 0.2s ease !important;
+        }
+
+        .fullscreen-close-btn:hover {
+            background: rgba(255, 255, 255, 1) !important;
+            transform: scale(1.1) !important;
+        }
+
+        body.dark-mode .fullscreen-close-btn {
+            background: rgba(31, 41, 55, 0.95) !important;
+            color: #10b981 !important;
+        }
+
+        body.dark-mode .fullscreen-close-btn:hover {
+            background: rgba(31, 41, 55, 1) !important;
+        }
+        
+        .bus-option-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .route-info {
+            flex: 1;
+        }
+        
+        .route-number {
+            font-size: 18px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 4px;
+        }
+        
+        body.dark-mode .route-number {
+            color: #f9fafb;
+        }
+        
+        .route-status {
+            font-size: 14px;
+            color: #6b7280;
+            font-weight: 500;
+        }
+        
+        body.dark-mode .route-status {
+            color: #d1d5db;
+        }
+        
+        .route-selector {
+            display: flex;
+            align-items: center;
+        }
+        
+        .route-selector input[type="radio"] {
+            display: none;
+        }
+        
+        .route-selector label {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #d1d5db;
+            border-radius: 50%;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        body.dark-mode .route-selector label {
+            border-color: #6b7280;
+        }
+        
+        .route-selector input[type="radio"]:checked + label {
+            border-color: #059669;
+            background: #059669;
+        }
+        
+        .route-selector input[type="radio"]:checked + label::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+        }
+        
+        .route-details {
+            margin-top: 12px;
+        }
+        
+        .route-stops {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 16px;
+            font-weight: 500;
+        }
+        
+        body.dark-mode .route-stops {
+            color: #d1d5db;
+        }
+        
+        .route-info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: #f8fafc;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        body.dark-mode .info-item {
+            background: #4b5563;
+        }
+        
+        .info-label {
+            color: #6b7280;
+            font-weight: 500;
+        }
+        
+        body.dark-mode .info-label {
+            color: #d1d5db;
+        }
+        
+        .info-value {
+            color: #111827;
+            font-weight: 600;
+        }
+        
+        body.dark-mode .info-value {
+            color: #f9fafb;
+        }
+        
+        .btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn:disabled:hover {
+            background: #9ca3af;
+            transform: none;
+        }
+        
+        .scan-history-section {
+            margin-bottom: 20px;
+        }
+        
+        .scan-history-list {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        body.dark-mode .scan-history-list {
+            background: #374151;
+        }
+        
+        .scan-history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        
+        .scan-history-item:last-child {
+            border-bottom: none;
+        }
+        
+        body.dark-mode .scan-history-item {
+            border-bottom-color: #4b5563;
+        }
+        
+        .passenger-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+        }
+        
+        body.dark-mode .passenger-info {
+            color: #f9fafb;
+        }
+        
+        .bus-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .bus-number {
+            font-size: 20px;
+            font-weight: bold;
+            color: #111827;
+        }
+        
+        .occupancy {
+            background: #059669;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .bus-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #6b7280;
+            font-size: 14px;
+        }
+        
+        .qr-section {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .qr-code {
+            width: 120px;
+            height: 120px;
+            background: #111827;
+            border-radius: 12px;
+            margin: 0 auto 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+        }
+        
+        .emergency-btn {
+            width: 100%;
+            background: #dc2626;
+            color: white;
+            padding: 18px;
+            border-radius: 16px;
+            border: none;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .nav-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            background: #111827;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .loading-bar {
+            width: 200px;
+            height: 4px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 2px;
+            margin: 0 auto;
+            overflow: hidden;
+        }
+        
+        .loading-progress {
+            height: 100%;
+            background: white;
+            width: 60%;
+            animation: loading 2s ease-in-out infinite;
+        }
+        
+        @keyframes loading {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="web-app-container">
+        <div class="web-app-header">
+            <div class="header-content">
+                <div class="logo-section">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiByeD0iOCIgZmlsbD0iIzA1OTY2OSIvPgo8cGF0aCBkPSJNMTAgMTBIMzBWMTBWMzBIMTBWMTBaIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIGZpbGw9Im5vbmUiLz4KPHBhdGggZD0iTTE1IDE1SDI1VjIwSDE1VjE1WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTE1IDI1SDMwVjMwSDE1VjI1WiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+Cg==" alt="Bus-Raahi" class="header-logo">
+                    <div class="header-text">
+                        <h1 class="app-title">Bus-Raahi</h1>
+                        <p class="app-tagline" id="tagline">chalo chale</p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="app-main">
+            
+            <!-- Splash Screen -->
+            <div class="screen splash-screen" id="splash-screen">
+                <div class="splash-content">
+                    <div class="splash-logo">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDEyMCAxMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMjAiIGhlaWdodD0iMTIwIiByeD0iMjQiIGZpbGw9IiNmZmZmZmYiLz4KPHBhdGggZD0iTTMwIDMwSDkwVjkwSDMwVjMwWiIgc3Ryb2tlPSIjMDU5NjY5IiBzdHJva2Utd2lkdGg9IjQiIGZpbGw9Im5vbmUiLz4KPHBhdGggZD0iTTQ1IDQ1SDc1VjYwSDQ1VjQ1WiIgZmlsbD0iIzA1OTY2OSIvPgo8cGF0aCBkPSJNNDUgNzVINzVWOTBINDVWNzVaIiBmaWxsPSIjMDU5OTY2OSIvPgo8L3N2Zz4K" alt="Bus-Raahi Logo" class="logo-image">
+                    </div>
+                    <h1 class="splash-app-name">Bus-Raahi</h1>
+                    <p class="splash-tagline" id="splash-tagline">chalo chale</p>
+                    <button class="start-button" onclick="startApp()">Start Journey</button>
+                    <div class="splash-loading">
+                        <div class="loading-dots">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Role Selection -->
+            <div class="screen hidden" id="role-selection">
+                <div class="screen-content">
+                    <div class="app-title">Pick Today's Mode</div>
+                    <div class="app-subtitle">Choose your role</div>
+                    <div class="role-selection">
+                        <div class="role-card" onclick="selectRole('conductor')">
+                            <div class="role-icon conductor-icon">🚌</div>
+                            <div class="role-title">Conductor</div>
+                            <div class="role-description">Manage bus operations and passenger verification</div>
+                        </div>
+                        <div class="role-card" onclick="selectRole('passenger')">
+                            <div class="role-icon passenger-icon">👤</div>
+                            <div class="role-title">Passenger</div>
+                            <div class="role-description">Find buses and track your journey</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Conductor Verification -->
+            <div class="screen hidden" id="conductor-verification">
+                <button class="back-button" onclick="goBack()" title="Go Back">←</button>
+                <div class="screen-content">
+                    <div class="form-container">
+                        <div class="form-title">Conductor Verification</div>
+                        <div style="text-align: center; margin-bottom: 30px;">
+                            <div style="font-size: 48px; margin-bottom: 16px;">🚌</div>
+                            <p style="color: #6b7280; font-size: 16px;">Verify your conductor credentials to access the dashboard</p>
+                        </div>
+                        <div class="input-group">
+                            <input type="text" class="input-field" placeholder="Conductor ID">
+                            <input type="password" class="input-field" placeholder="Verification Code">
+                            <input type="text" class="input-field" placeholder="Bus Number">
+                        </div>
+                        <button class="btn btn-primary" onclick="verifyConductor()">Verify & Access Dashboard</button>
+                        <button class="btn btn-secondary" onclick="testVerify()" style="margin-top: 8px;">Test Verify (Auto-fill)</button>
+                        <button class="btn btn-secondary" onclick="showRoleSelection()">Back to Role Selection</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Login Screen -->
+            <div class="screen hidden" id="login-screen">
+                <button class="back-button" onclick="goBack()" title="Go Back">←</button>
+                <div class="screen-content">
+                    <div class="form-container">
+                        <div class="form-title">Welcome Back !!</div>
+                        <div class="input-group">
+                            <input type="text" class="input-field" placeholder="Full Name">
+                            <input type="tel" class="input-field" placeholder="Phone Number">
+                            <input type="password" class="input-field" placeholder="Password">
+                        </div>
+                        <button class="btn btn-primary" onclick="showDashboard()">Sign In !</button>
+                        <button class="btn btn-secondary" onclick="showSignup()">Create an account</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Signup Screen -->
+            <div class="screen hidden" id="signup-screen">
+                <div class="screen-content">
+                    <div class="form-container">
+                        <div class="form-title">Let's Create Your Account</div>
+                        <div class="input-group">
+                            <input type="text" class="input-field" placeholder="Full Name">
+                            <input type="email" class="input-field" placeholder="Email Address">
+                            <input type="password" class="input-field" placeholder="Password">
+                            <input type="password" class="input-field" placeholder="Retype Password">
+                        </div>
+                        <button class="btn btn-primary" onclick="showDashboard()">Sign Up</button>
+                        <button class="btn btn-secondary" onclick="showLogin()">Back to Login</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Conductor Dashboard -->
+            <div class="screen hidden" id="conductor-dashboard">
+                <button class="back-button" onclick="goBack()" title="Go Back">←</button>
+                <div class="dashboard">
+                    <div class="dashboard-header">
+                        <div>
+                            <div class="dashboard-title">Conductor Dashboard</div>
+                            <div class="dashboard-subtitle">Bus C001 - Route 25B</div>
+                        </div>
+                        <div class="status-indicator">
+                            <div class="status-dot"></div>
+                            <span>Active</span>
+                        </div>
+                    </div>
+                    <div class="dashboard-content">
+                        <div class="section">
+                            <div class="section-title">Trip Controls</div>
+                        <div class="control-buttons">
+                            <button class="control-btn btn-start" onclick="startTrip()">▶️ Start</button>
+                            <button class="control-btn btn-end" onclick="endTrip()">⏹️ End</button>
+                            <button class="control-btn btn-reset" onclick="resetTrip()">🔄 Reset</button>
+                        </div>
+                        </div>
+                        
+                        <div class="section">
+                            <div class="section-title">Passenger Count</div>
+                            <div class="passenger-card">
+                                <div style="font-size: 24px;">👥</div>
+                                <div class="passenger-count">12</div>
+                                <div style="color: #6b7280; font-weight: 500;">Verified Passengers</div>
+                            </div>
+                            <div class="passenger-controls">
+                                <button class="passenger-btn btn-remove" onclick="removePassenger()">➖ Remove</button>
+                                <button class="passenger-btn btn-add" onclick="addPassenger()">➕ Add</button>
+                                <button class="passenger-btn btn-scan" onclick="scanQR()">📱 Scan QR</button>
+                            </div>
+                        </div>
+                        
+                        <div class="section">
+                            <div class="section-title">Live Map & Next Stop</div>
+                            <div class="map-container conductor-map-container" style="margin-bottom: 16px; position: relative;">
+                                <div id="conductor-map" style="width: 100%; height: 500px; border-radius: 12px; background: #f3f4f6;"></div>
+                                <button class="fullscreen-btn" onclick="toggleFullscreen('conductor-map')" title="Toggle Fullscreen">⛶</button>
+                            </div>
+                            <div style="background: white; border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                    <span style="font-weight: bold; color: #111827;">Next Stop: Mall Road</span>
+                                    <span style="background: #059669; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">1.2 km</span>
+                                </div>
+                                <div style="color: #6b7280; font-size: 14px;">ETA: 3 minutes</div>
+                            </div>
+                        </div>
+                        
+                        <div class="section">
+                            <div class="section-title">STOPS</div>
+                            <div class="stops-list">
+                                <div class="stop-item">
+                                    <span class="stop-name">Stop 1: Kempegowda Bus Station</span>
+                                    <span class="stop-distance">✓ Completed</span>
+                                </div>
+                                <div class="stop-item">
+                                    <span class="stop-name">Stop 2: Majestic</span>
+                                    <span class="stop-distance">1.2 km (Next)</span>
+                                </div>
+                                <div class="stop-item">
+                                    <span class="stop-name">Stop 3: MG Road</span>
+                                    <span class="stop-distance">2.8 km</span>
+                                </div>
+                                <div class="stop-item">
+                                    <span class="stop-name">Stop 4: Brigade Road</span>
+                                    <span class="stop-distance">4.1 km</span>
+                                </div>
+                            </div>
+                            <button class="add-stop-btn" onclick="addStop()">+ Add Stop</button>
+                        </div>
+                        
+                        <div class="scan-history-section"></div>
+                        
+                        <button class="emergency-btn" onclick="emergencyCall()">📞 Emergency Call (100)</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Passenger Home -->
+            <div class="screen hidden" id="passenger-home">
+                <button class="back-button" onclick="goBack()" title="Go Back">←</button>
+                <div class="dashboard">
+                    <div class="dashboard-header">
+                        <div>
+                            <div class="dashboard-title">Bus-Raahi</div>
+                            <div class="dashboard-subtitle">Find your bus in real-time</div>
+                        </div>
+                    </div>
+                    <div class="dashboard-content">
+                        <div class="section">
+                            <div class="section-title">Enter Your Journey</div>
+                            <div class="input-group">
+                                <input type="text" class="input-field" placeholder="Current Location" value="Kempegowda Bus Station">
+                                <input type="text" class="input-field" placeholder="Destination" value="MG Road">
+                            </div>
+                            <button class="btn btn-primary" onclick="findBuses()">Find Buses</button>
+                            
+                            <div class="section" style="margin-top: 16px;">
+                                <div class="section-title">Scanner Options</div>
+                                <div class="toggle-group">
+                                    <label class="toggle-label">
+                                        <input type="checkbox" id="passenger-qr-scanner-toggle" onchange="togglePassengerQRScanner()">
+                                        <span class="toggle-text">Enable QR Scanner for Automatic Tracking</span>
+                                    </label>
+                                </div>
+                                <div class="scanner-info" id="scanner-info" style="display: none; background: #f0f9ff; border: 1px solid #0ea5e9; border-radius: 8px; padding: 12px; margin-top: 8px; font-size: 14px; color: #0369a1;">
+                                    ✅ QR Scanner enabled - Bus will be tracked automatically when you scan your ticket
+                                </div>
+                                <div class="no-scanner-info" id="no-scanner-info" style="display: none; background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 12px; margin-top: 8px; font-size: 14px; color: #92400e;">
+                                    📍 Manual mode - You can check stop distances and track bus manually
+                                </div>
+                                
+                                <!-- QR Scanner Camera -->
+                                <div id="qr-scanner-container" style="display: none; margin-top: 12px;">
+                                    <div style="background: #000; border-radius: 8px; padding: 20px; text-align: center;">
+                                        <div style="color: white; font-size: 16px; margin-bottom: 12px;">📷 Camera Scanner</div>
+                                        <video id="qr-video" width="250" height="200" style="border-radius: 8px; background: #333;"></video>
+                                        <div style="color: #ccc; font-size: 12px; margin-top: 8px;">Point camera at QR code</div>
+                                        <button onclick="stopQRScanner()" class="btn btn-secondary" style="margin-top: 8px;">Stop Scanner</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="map-container passenger-map-container" style="position: relative;">
+                            <div id="passenger-map" style="width: 100%; height: 350px; border-radius: 12px; background: #f3f4f6;"></div>
+                            <button class="fullscreen-btn" onclick="toggleFullscreen('passenger-map')" title="Toggle Fullscreen">⛶</button>
+                        </div>
+                        
+                        <div class="bus-option" onclick="selectRoute('25B')" id="route-25B">
+                            <div class="bus-option-header">
+                                <div class="route-info">
+                                    <div class="route-number">Route 25B</div>
+                                    <div class="route-status">65% Occupancy</div>
+                                </div>
+                                <div class="route-selector">
+                                    <input type="radio" name="route" value="25B" id="radio-25B">
+                                    <label for="radio-25B"></label>
+                                </div>
+                            </div>
+                            <div class="route-details">
+                                <div class="route-stops">Kempegowda Bus Station → Majestic → MG Road → Brigade Road</div>
+                                <div class="route-info-grid">
+                                    <div class="info-item" style="background: #fef3c7; border: 2px solid #f59e0b;">
+                                        <span class="info-label" style="color: #92400e; font-weight: 700;">💰 Fare:</span>
+                                        <span class="info-value" style="color: #92400e; font-weight: 800; font-size: 16px;">₹25</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Duration:</span>
+                                        <span class="info-value">25 min</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Next Bus:</span>
+                                        <span class="info-value">8 min</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Distance:</span>
+                                        <span class="info-value">2.3 km</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bus-option" onclick="selectRoute('205')" id="route-205">
+                            <div class="bus-option-header">
+                                <div class="route-info">
+                                    <div class="route-number">Route 205</div>
+                                    <div class="route-status">45% Occupancy</div>
+                                </div>
+                                <div class="route-selector">
+                                    <input type="radio" name="route" value="205" id="radio-205">
+                                    <label for="radio-205"></label>
+                                </div>
+                            </div>
+                            <div class="route-details">
+                                <div class="route-stops">Kempegowda Bus Station → Indiranagar → Koramangala → Jayanagar</div>
+                                <div class="route-info-grid">
+                                    <div class="info-item" style="background: #fef3c7; border: 2px solid #f59e0b;">
+                                        <span class="info-label" style="color: #92400e; font-weight: 700;">💰 Fare:</span>
+                                        <span class="info-value" style="color: #92400e; font-weight: 800; font-size: 16px;">₹20</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Duration:</span>
+                                        <span class="info-value">20 min</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Next Bus:</span>
+                                        <span class="info-value">5 min</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Distance:</span>
+                                        <span class="info-value">1.8 km</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button class="btn btn-primary" onclick="proceedToTicket()" id="proceed-btn" disabled>Select Route to Continue</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- QR Ticket -->
+            <div class="screen hidden" id="qr-ticket">
+                <button class="back-button" onclick="goBack()" title="Go Back">←</button>
+                <div class="dashboard">
+                    <div class="dashboard-header">
+                        <div>
+                            <div class="dashboard-title">Get Your Ticket</div>
+                            <div class="dashboard-subtitle">Route 25B - ₹25</div>
+                        </div>
+                    </div>
+                    <div class="dashboard-content">
+                        <div class="qr-section">
+                            <div class="qr-code" id="qr-code-container">
+                                <div id="qr-placeholder">Generating QR Code...</div>
+                            </div>
+                            
+                            <!-- Ticket Details -->
+                            <div class="ticket-details">
+                                <h3 class="ticket-title">Digital Bus Ticket</h3>
+                                <p class="ticket-subtitle">Show this QR code to the conductor</p>
+                                
+                                <div class="ticket-info-grid">
+                                    <div class="ticket-info-item">
+                                        <span class="info-label">Ticket ID:</span>
+                                        <span class="info-value" id="ticket-id">TKT123456789</span>
+                                    </div>
+                                    <div class="ticket-info-item">
+                                        <span class="info-label">Route:</span>
+                                        <span class="info-value" id="ticket-route">25B</span>
+                                    </div>
+                                    <div class="ticket-info-item">
+                                        <span class="info-label">From:</span>
+                                        <span class="info-value" id="ticket-from">Kempegowda Bus Station</span>
+                                    </div>
+                                    <div class="ticket-info-item">
+                                        <span class="info-label">To:</span>
+                                        <span class="info-value" id="ticket-to">MG Road</span>
+                                    </div>
+                                    <div class="ticket-info-item">
+                                        <span class="info-label">Fare:</span>
+                                        <span class="info-value ticket-fare" id="ticket-fare">₹25</span>
+                                    </div>
+                                    <div class="ticket-info-item">
+                                        <span class="info-label">Valid Until:</span>
+                                        <span class="info-value" id="ticket-valid">2 hours from now</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="ticket-features">
+                                    <div class="feature-item">
+                                        <span class="feature-icon">🎫</span>
+                                        <span class="feature-text">Single use ticket</span>
+                                    </div>
+                                    <div class="feature-item">
+                                        <span class="feature-icon">⏰</span>
+                                        <span class="feature-text">2 hours validity</span>
+                                    </div>
+                                    <div class="feature-item">
+                                        <span class="feature-icon">📱</span>
+                                        <span class="feature-text">Digital format</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="ticket-warning">
+                                    <span class="warning-icon">⚠️</span>
+                                    <span class="warning-text">SINGLE USE ONLY - Valid for 2 hours from purchase time</span>
+                                </div>
+                            </div>
+                            
+                            <div class="scanner-option">
+                                <label class="scanner-toggle">
+                                    <input type="checkbox" id="qr-scanner-toggle" onchange="toggleQRScanner()">
+                                    <span class="toggle-text">Enable QR scanner for automatic tracking</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="bus-details">
+                            <div class="detail-item">🎫 Ticket ID: TKT789</div>
+                            <div class="detail-item">🚌 Bus: 25B</div>
+                            <div class="detail-item">📍 Route: Central → University</div>
+                            <div class="detail-item">⏰ Valid: 2 hours</div>
+                        </div>
+                        
+                        <div class="nav-buttons">
+                            <button class="nav-btn" onclick="showPassengerHome()">Back to Search</button>
+                            <button class="nav-btn" onclick="showLiveTracking()">Track Bus</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Live Tracking -->
+            <div class="screen hidden" id="live-tracking">
+                <button class="back-button" onclick="goBack()" title="Go Back">←</button>
+                <div class="dashboard">
+                    <div class="dashboard-header">
+                        <div>
+                            <div class="dashboard-title">Live Tracking</div>
+                            <div class="dashboard-subtitle">Bus 25B - Kempegowda Bus Station to Brigade Road</div>
+                        </div>
+                    </div>
+                    <div class="dashboard-content">
+                        <div class="map-container live-tracking-map" style="position: relative;">
+                            <div id="map" style="width: 100%; height: 500px; border-radius: 12px; background: #f3f4f6;"></div>
+                            <button class="fullscreen-btn" onclick="toggleFullscreen('map')" title="Toggle Fullscreen">⛶</button>
+                        </div>
+                        
+                        <div class="bus-card">
+                            <div class="bus-header">
+                                <div class="bus-number">Time to Destination</div>
+                                <div class="occupancy">18 min</div>
+                            </div>
+                            <div class="bus-details">
+                                <div class="detail-item">📍 2.8 km to Brigade Road</div>
+                                <div class="detail-item">👥 12 passengers on board</div>
+                                <div class="detail-item">⚡ On time</div>
+                                <div class="detail-item">🔄 65% journey complete</div>
+                            </div>
+                            <div style="margin-top: 12px; padding: 12px; background: #f8fafc; border-radius: 8px; font-size: 14px; color: #6b7280;">
+                                <strong>Next Stop:</strong> MG Road - 3 min<br>
+                                <strong>Current Speed:</strong> 25 km/h
+                            </div>
+                        </div>
+                        
+                        <div class="nav-buttons">
+                            <button class="nav-btn" onclick="showQRTicket()">View Ticket</button>
+                            <button class="nav-btn" onclick="showPassengerHome()">Back to Search</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    <script>
+        // Firebase Configuration - Replace with your actual Firebase config
+        const firebaseConfig = {
+            apiKey: "YOUR_FIREBASE_API_KEY",
+            authDomain: "your-project.firebaseapp.com",
+            projectId: "your-project-id",
+            storageBucket: "your-project.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "your-app-id",
+            databaseURL: "https://your-project-id.firebaseio.com/"
+        };
+        
+        // Initialize Firebase
+        let db, realtimeDb, auth;
+        let isFirebaseInitialized = false;
+        
+        const API_BASE_URL = 'http://localhost:3000'; // backend URL
+        const GOOGLE_MAPS_API_KEY = 'AIzaSyDtEnjEnVHpgxGTopVUfrGD4QaVtqxLJGw';
+        
+        let currentScreen = 'splash-screen';
+        let selectedRoute = null;
+        let passengerCount = 12;
+        let verifiedPassengers = new Set();
+        let scanHistory = [];
+        let qrScannerEnabled = false;
+        let trackingInterval = null;
+        let currentUser = null;
+        
+        // Tagline translations
+        const TAGLINE_TRANSLATIONS = {
+            english: "Let's Go",
+            hindi: "चलो चले",
+            kannada: "ಹೋಗೋಣ",
+            telugu: "వెళ్దాం",
+            assamese: "যাওঁ আহক",
+            bengali: "চলো যাই",
+            tamil: "போகலாம்",
+            malayalam: "പോകാം",
+            gujarati: "ચાલો જઈએ",
+            marathi: "चलो जाऊ"
+        };
+        
+        let currentLanguageIndex = 0;
+        const languages = Object.keys(TAGLINE_TRANSLATIONS);
+        
+        // Map variables
+        let map, leafletMap;
+        let busMarker, leafletBusMarker;
+        let stopMarkers = [];
+        let routePolyline, leafletRoute;
+        let directionsService, directionsRenderer;
+        
+        // Dynamic route data
+        const DYNAMIC_ROUTES = [
+            {
+                id: '25B',
+                name: 'Route 25B',
+                stops: ['Kempegowda Bus Station', 'Majestic', 'MG Road', 'Brigade Road'],
+                fare: 25,
+                duration: '25 min',
+                occupancy: '65%'
+            },
+            {
+                id: '205',
+                name: 'Route 205',
+                stops: ['Kempegowda Bus Station', 'Indiranagar', 'Koramangala', 'Jayanagar'],
+                fare: 20,
+                duration: '20 min',
+                occupancy: '45%'
+            },
+            {
+                id: '102A',
+                name: 'Route 102A',
+                stops: ['Kempegowda Bus Station', 'Majestic', 'Banashankari', 'Jayanagar'],
+                fare: 30,
+                duration: '35 min',
+                occupancy: '80%'
+            },
+            {
+                id: '401',
+                name: 'Route 401',
+                stops: ['Kempegowda Bus Station', 'MG Road', 'Brigade Road', 'Indiranagar'],
+                fare: 22,
+                duration: '28 min',
+                occupancy: '55%'
+            }
+        ];
+        
+        let currentRouteIndex = 0;
+        
+        // Initialize Firebase
+        async function initializeFirebase() {
+            try {
+                if (typeof firebase !== 'undefined') {
+                    firebase.initializeApp(firebaseConfig);
+                    db = firebase.firestore();
+                    realtimeDb = firebase.database();
+                    auth = firebase.auth();
+                    isFirebaseInitialized = true;
+                    
+                    // Setup Firebase listeners
+                    setupFirebaseListeners();
+                    console.log('Firebase initialized successfully');
+                } else {
+                    console.warn('Firebase not loaded, using mock data');
+                }
+            } catch (error) {
+                console.error('Firebase initialization error:', error);
+            }
+        }
+        
+        // Setup Firebase listeners
+        function setupFirebaseListeners() {
+            if (!isFirebaseInitialized) return;
+            
+            // Listen for passenger changes
+            db.collection('passengers').onSnapshot((snapshot) => {
+                snapshot.docChanges().forEach((change) => {
+                    if (change.type === 'added') {
+                        handlePassengerAdded(change.doc.data());
+                    } else if (change.type === 'removed') {
+                        handlePassengerRemoved(change.doc.id);
+                    }
+                });
+                updatePassengerCount();
+                updateScanHistory();
+            });
+            
+            // Listen for bus location changes
+            realtimeDb.ref('bus-location').on('value', (snapshot) => {
+                const location = snapshot.val();
+                if (location) {
+                    updateBusLocationFromFirebase(location);
+                }
+            });
+            
+            // Listen for trips
+            realtimeDb.ref('trips').on('value', (snapshot) => {
+                const trips = snapshot.val();
+                if (trips) {
+                    console.log('Trips updated:', trips);
+                }
+            });
+        }
+        
+        // Tagline animation - WORKING VERSION
+        function startTaglineAnimation() {
+            console.log('🔥 Starting tagline animation...');
+            const taglines = ['Let\'s Go', 'चलो चले', 'ಹೋಗೋಣ', 'వెళ్దాం', 'যাওয়া যাক', 'ਚਲੋ ਚਲੀਏ'];
+            
+            // Splash screen tagline
+            const splashTaglineElement = document.getElementById('splash-tagline');
+            console.log('Splash element found:', !!splashTaglineElement);
+            if (splashTaglineElement) {
+                let currentIndex = 0;
+                splashTaglineElement.textContent = taglines[currentIndex];
+                console.log('Set initial splash text:', taglines[currentIndex]);
+                
+                setInterval(() => {
+                    currentIndex = (currentIndex + 1) % taglines.length;
+                    splashTaglineElement.textContent = taglines[currentIndex];
+                    console.log('🔥 Splash switched to:', taglines[currentIndex]);
+                }, 3000);
+            }
+
+            // Header tagline
+            const headerTaglineElement = document.getElementById('tagline');
+            console.log('Header element found:', !!headerTaglineElement);
+            if (headerTaglineElement) {
+                let headerIndex = 0;
+                headerTaglineElement.textContent = taglines[headerIndex];
+                console.log('Set initial header text:', taglines[headerIndex]);
+                
+                setInterval(() => {
+                    headerIndex = (headerIndex + 1) % taglines.length;
+                    headerTaglineElement.textContent = taglines[headerIndex];
+                    console.log('🔥 Header switched to:', taglines[headerIndex]);
+                }, 3000);
+            }
+        }
+        
+        // Bangalore locations with proper stop names
+        const BANGALORE_LOCATIONS = {
+            kempegowdaBusStation: { lat: 12.9778, lng: 77.5906, name: "Kempegowda Bus Station", stopNumber: 1 },
+            majestic: { lat: 12.9770, lng: 77.6102, name: "Majestic", stopNumber: 2 },
+            mgRoad: { lat: 12.9716, lng: 77.6051, name: "MG Road", stopNumber: 3 },
+            brigadeRoad: { lat: 12.9711, lng: 77.6075, name: "Brigade Road", stopNumber: 4 },
+            indiranagar: { lat: 12.9719, lng: 77.6412, name: "Indiranagar", stopNumber: 5 },
+            koramangala: { lat: 12.9279, lng: 77.6271, name: "Koramangala", stopNumber: 6 },
+            jayanagar: { lat: 12.9253, lng: 77.5838, name: "Jayanagar", stopNumber: 7 },
+            banashankari: { lat: 12.9244, lng: 77.5466, name: "Banashankari", stopNumber: 8 }
+        };
+
+        // Google Maps initialization
+        function initGoogleMap() {
+            // Initialize passenger map (live tracking)
+            if (!map) {
+                const mapElement = document.getElementById('map');
+                if (mapElement) {
+                    map = new google.maps.Map(mapElement, {
+                        zoom: 12,
+                        center: BANGALORE_LOCATIONS.kempegowdaBusStation,
+                        mapTypeId: google.maps.MapTypeId.ROADMAP
+                    });
+                    
+                    directionsService = new google.maps.DirectionsService();
+                    directionsRenderer = new google.maps.DirectionsRenderer({
+                        draggable: false,
+                        suppressMarkers: true
+                    });
+                    directionsRenderer.setMap(map);
+                    
+                    // Add passenger location marker
+                    createPassengerLocationMarker(BANGALORE_LOCATIONS.mgRoad);
+                    
+                    console.log('Google Maps initialized for passenger live tracking');
+                }
+            }
+            
+            // Initialize passenger home map
+            const passengerMapElement = document.getElementById('passenger-map');
+            if (passengerMapElement && !window.passengerHomeMap) {
+                window.passengerHomeMap = new google.maps.Map(passengerMapElement, {
+                    zoom: 12,
+                    center: BANGALORE_LOCATIONS.kempegowdaBusStation,
+                    mapTypeId: google.maps.MapTypeId.ROADMAP
+                });
+                
+                // Add passenger location marker
+                createPassengerLocationMarker(BANGALORE_LOCATIONS.kempegowdaBusStation);
+                
+                console.log('Google Maps initialized for passenger home');
+            }
+            
+            // Initialize conductor map
+            const conductorMapElement = document.getElementById('conductor-map');
+            if (conductorMapElement && !window.conductorMap) {
+                window.conductorMap = new google.maps.Map(conductorMapElement, {
+                    zoom: 14,
+                    center: BANGALORE_LOCATIONS.kempegowdaBusStation,
+                    mapTypeId: google.maps.MapTypeId.ROADMAP,
+                    styles: [
+                        {
+                            featureType: "poi",
+                            elementType: "labels",
+                            stylers: [{ visibility: "off" }]
+                        }
+                    ]
+                });
+                
+                // Create bus marker and route for conductor map
+                createConductorBusMarker(BANGALORE_LOCATIONS.majestic);
+                createBusRoute();
+                createStopMarkers();
+                
+                console.log('Google Maps initialized for conductor');
+            }
+        }
+        
+        // Leaflet Map initialization
+        function initLeafletMap() {
+            if (!leafletMap && document.getElementById('leaflet-map')) {
+                leafletMap = L.map('leaflet-map').setView([40.7128, -74.0060], 13);
+                
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors'
+                }).addTo(leafletMap);
+                
+                console.log('Leaflet Map initialized');
+            }
+        }
+        
+        // ----------- Screen Navigation -----------
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => screen.classList.add('hidden'));
+            document.getElementById(screenId).classList.remove('hidden');
+            currentScreen = screenId;
+            
+            // Start tagline animation when splash screen is shown
+            if (screenId === 'splash-screen') {
+                setTimeout(() => {
+                    console.log('🔥 Starting tagline animation for splash screen...');
+                    startTaglineAnimation();
+                }, 100);
+            }
+        }
+        
+        function selectRole(role) {
+            if (role === 'conductor') showScreen('conductor-verification');
+            else showScreen('passenger-home');
+        }
+        
+        function showLogin() { showScreen('login-screen'); }
+        function showSignup() { showScreen('signup-screen'); }
+        function showDashboard() { showScreen('role-selection'); }
+        function showPassengerHome() { showScreen('passenger-home'); }
+        function showQRTicket() { 
+            showScreen('qr-ticket'); 
+            generateQRCode();
+        }
+        
+        function generateQRCode() {
+            // Get current destination from passenger input
+            const destinationInput = document.querySelector('input[placeholder="Destination"]');
+            const currentDestination = destinationInput ? destinationInput.value : 'MG Road';
+            
+            // Generate ticket data
+            const ticketData = {
+                ticketId: 'TKT' + Date.now(),
+                route: selectedRoute || '25B',
+                fare: selectedRoute === '205' ? 20 : 25,
+                timestamp: new Date().toISOString(),
+                passenger: 'P' + Math.floor(Math.random() * 1000),
+                from: 'Kempegowda Bus Station',
+                to: currentDestination,
+                validUntil: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString() // 2 hours
+            };
+
+            // Update ticket details in the UI
+            document.getElementById('ticket-id').textContent = ticketData.ticketId;
+            document.getElementById('ticket-route').textContent = ticketData.route;
+            document.getElementById('ticket-from').textContent = ticketData.from;
+            document.getElementById('ticket-to').textContent = ticketData.to;
+            document.getElementById('ticket-fare').textContent = `₹${ticketData.fare}`;
+            
+            // Calculate and display validity time
+            const validUntil = new Date(ticketData.validUntil);
+            const validUntilStr = validUntil.toLocaleTimeString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: true 
+            });
+            document.getElementById('ticket-valid').textContent = `Until ${validUntilStr}`;
+            
+            const qrData = JSON.stringify(ticketData);
+            
+            // Create a better-looking QR code representation
+            const qrContainer = document.getElementById('qr-code-container');
+            
+            // Create a visual QR-like pattern with better styling
+            const qrPattern = createEnhancedQRPattern(qrData);
+            qrContainer.innerHTML = qrPattern;
+            
+            // Store ticket data globally for conductor scanning
+            window.currentTicket = ticketData;
+        }
+        
+        function createEnhancedQRPattern(data) {
+            // Create a clean, simple QR code pattern
+            const size = 16;
+            let pattern = '<div style="background: white; padding: 15px; border-radius: 12px; display: inline-block; border: 3px solid #333; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">';
+            
+            // Create QR-like square pattern
+            for (let row = 0; row < size; row++) {
+                pattern += '<div style="display: flex;">';
+                for (let col = 0; col < size; col++) {
+                    // Create a deterministic pattern based on data
+                    const shouldFill = (row * size + col + data.length) % 3 === 0;
+                    const color = shouldFill ? '#000' : '#fff';
+                    pattern += `<div style="width: 10px; height: 10px; background: ${color}; margin: 0.5px;"></div>`;
+                }
+                pattern += '</div>';
+            }
+            
+            pattern += '</div>';
+            
+            return pattern;
+        }
+        
+        function createQRPattern(data) {
+            // Create a simple QR-like pattern based on data
+            const size = 15;
+            let pattern = '';
+            
+            for (let y = 0; y < size; y++) {
+                for (let x = 0; x < size; x++) {
+                    // Create pattern based on data hash
+                    const hash = (data.charCodeAt((x + y) % data.length) + x + y) % 2;
+                    pattern += hash ? '██' : '░░';
+                }
+                pattern += '\n';
+            }
+            
+            return pattern;
+        }
+        function showLiveTracking() { showScreen('live-tracking'); }
+        function showRoleSelection() { showScreen('role-selection'); }
+        
+        // ----------- Conductor Functions -----------
+        function startTrip() {
+            alert('✅ Trip started! Bus is now active and tracking.');
+            document.querySelector('.btn-end').disabled = false;
+            document.querySelector('.btn-start').disabled = true;
+        }
+        
+        function endTrip() {
+            alert('🏁 Trip ended! All passengers have been logged and verified.');
+            document.querySelector('.btn-end').disabled = true;
+            document.querySelector('.btn-start').disabled = false;
+        }
+        
+        function resetTrip() {
+            if (confirm('⚠️ Are you sure you want to reset the trip? This will clear all passenger data.')) {
+                passengerCount = 0;
+                verifiedPassengers.clear();
+                scanHistory = [];
+                updatePassengerCount();
+                updateScanHistory();
+                alert('🔄 Trip reset! All passenger data cleared.');
+            }
+        }
+        
+        // ----------- Conductor Passenger Management -----------
+        function addPassenger() {
+            const count = parseInt(prompt('How many passengers to add?', '1')) || 1;
+            
+            console.log('Adding passengers:', count);
+            
+            // Add to local tracking immediately
+            passengerCount += count;
+            updatePassengerCount();
+            
+            alert(`✅ Added ${count} passenger(s). Total: ${passengerCount}`);
+            
+            // Try Firebase update (non-blocking)
+            if (isFirebaseInitialized && db) {
+                for (let i = 0; i < count; i++) {
+                    const passengerId = 'P' + Date.now() + '_' + i;
+                    const passengerData = {
+                        id: passengerId,
+                        name: `Passenger ${passengerId}`,
+                        ticketId: 'MANUAL-' + passengerId,
+                        timestamp: Date.now(),
+                        status: 'active',
+                        scanned: false,
+                        verified: true,
+                        conductorId: currentUser?.id || 'unknown'
+                    };
+                    
+                    db.collection('passengers').doc(passengerId).set(passengerData).catch(error => {
+                        console.error('Firebase sync error:', error);
+                    });
+                }
+            }
+        }
+        
+        function removePassenger() {
+            const count = parseInt(prompt('How many passengers to remove?', '1')) || 1;
+            
+            console.log('Removing passengers:', count);
+            
+            // Remove from local tracking immediately
+            passengerCount = Math.max(0, passengerCount - count);
+            updatePassengerCount();
+            
+            alert(`➖ Removed ${count} passenger(s). Total: ${passengerCount}`);
+            
+            // Try Firebase update (non-blocking)
+            if (isFirebaseInitialized && db) {
+                db.collection('passengers').limit(count).get().then(snapshot => {
+                    const batch = db.batch();
+                    snapshot.forEach((doc) => {
+                        batch.delete(doc.ref);
+                    });
+                    batch.commit().catch(error => {
+                        console.error('Firebase sync error:', error);
+                    });
+                }).catch(error => {
+                    console.error('Firebase sync error:', error);
+                });
+            }
+        }
+        
+        // ----------- Backend Integration Functions -----------
+        async function addPassengerBackend(name, ticketId) {
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/protected/passengers`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, ticketId })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    passengerCount++;
+                    updatePassengerCount();
+                    verifiedPassengers.add(data.passengerId || name);
+                    scanHistory.push({ id: data.passengerId || name, timestamp: new Date(), valid: true });
+                    updateScanHistory();
+                    alert(`✅ Passenger ${name} added successfully!`);
+                } else {
+                    alert(`❌ Error: ${data.error || 'Could not add passenger'}`);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('❌ Backend error while adding passenger.');
+            }
+        }
+        
+        async function removePassengerBackend(passengerId = null) {
+            try {
+                // If no specific ID is given, prompt user
+                if (!passengerId) {
+                    passengerId = prompt('Enter Passenger ID to remove:');
+                }
+                if (!passengerId || !verifiedPassengers.has(passengerId)) {
+                    alert('❌ Passenger not found!');
+                    return;
+                }
+        
+                const res = await fetch(`${API_BASE_URL}/api/protected/passengers/${passengerId}`, {
+                    method: 'DELETE'
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    passengerCount = Math.max(0, passengerCount - 1);
+                    verifiedPassengers.delete(passengerId);
+                    scanHistory = scanHistory.filter(s => s.id !== passengerId);
+                    updatePassengerCount();
+                    updateScanHistory();
+                    alert(`➖ Passenger ${passengerId} removed successfully!`);
+                } else {
+                    alert(`❌ Error: ${data.error || 'Could not remove passenger'}`);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('❌ Backend error while removing passenger.');
+            }
+        }
+        
+        function scanQR() {
+            console.log('QR Scan function called');
+            
+            // Show camera scanner for conductor
+            showConductorQRScanner();
+        }
+        
+        function showConductorQRScanner() {
+            // Create a modal for conductor QR scanner
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                z-index: 1000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: white; border-radius: 12px; padding: 20px; max-width: 400px; width: 90%; text-align: center;">
+                    <h3 style="margin-bottom: 16px;">📱 Scan Passenger QR Code</h3>
+                    <video id="conductor-qr-video" width="300" height="200" style="border-radius: 8px; background: #333; margin-bottom: 12px;"></video>
+                    <div style="color: #666; font-size: 14px; margin-bottom: 16px;">Point camera at passenger's QR ticket</div>
+                    <div style="display: flex; gap: 12px; justify-content: center;">
+                        <button onclick="startConductorQRScanner()" class="btn btn-primary">Start Camera</button>
+                        <button onclick="closeConductorQRScanner()" class="btn btn-secondary">Close</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            window.conductorQRModal = modal;
+        }
+        
+        function startConductorQRScanner() {
+            const video = document.getElementById('conductor-qr-video');
+            
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'environment',
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    } 
+                })
+                .then(stream => {
+                    window.conductorQRStream = stream;
+                    video.srcObject = stream;
+                    video.play();
+                    
+                    // Simulate QR detection for conductor
+                    setTimeout(() => {
+                        processConductorQRScan();
+                    }, 3000);
+                })
+                .catch(err => {
+                    console.error('Camera access denied:', err);
+                    alert('❌ Camera access denied. Please allow camera permission.');
+                });
+            } else {
+                alert('❌ Camera not supported on this device.');
+            }
+        }
+        
+        function processConductorQRScan() {
+            // Check if there's a current ticket from passenger
+            if (window.currentTicket) {
+                const ticket = window.currentTicket;
+                const passengerId = ticket.passenger;
+                
+                if (verifiedPassengers.has(passengerId)) {
+                    alert('⚠️ This passenger has already been verified!');
+                    closeConductorQRScanner();
+                    return;
+                }
+                
+                // Add to local tracking immediately
+                verifiedPassengers.add(passengerId);
+                scanHistory.push({
+                    id: passengerId,
+                    timestamp: new Date(),
+                    valid: true,
+                    ticketId: ticket.ticketId,
+                    route: ticket.route,
+                    fare: ticket.fare
+                });
+                
+                passengerCount++;
+                updatePassengerCount();
+                updateScanHistory();
+                
+                alert(`✅ QR Code verified!\nPassenger: ${passengerId}\nRoute: ${ticket.route}\nFare: ₹${ticket.fare}\nTotal: ${passengerCount}`);
+                
+                // Clear the ticket after successful scan
+                window.currentTicket = null;
+                
+                closeConductorQRScanner();
+                
+            } else {
+                // Fallback to random scan if no ticket available
+                const passengerId = 'P' + Math.floor(Math.random() * 10000);
+                const isValid = Math.random() > 0.2; // 80% success rate
+                
+                if (isValid) {
+                    if (verifiedPassengers.has(passengerId)) {
+                        alert('⚠️ This passenger has already been verified!');
+                        closeConductorQRScanner();
+                        return;
+                    }
+                    
+                    // Add to local tracking immediately
+                    verifiedPassengers.add(passengerId);
+                    scanHistory.push({
+                        id: passengerId,
+                        timestamp: new Date(),
+                        valid: true
+                    });
+                    
+                    passengerCount++;
+                    updatePassengerCount();
+                    updateScanHistory();
+                    
+                    alert(`✅ QR Code verified! Passenger ${passengerId} added. Total: ${passengerCount}`);
+                    
+                    closeConductorQRScanner();
+                    
+                } else {
+                    // Invalid QR
+                    scanHistory.push({
+                        id: passengerId,
+                        timestamp: new Date(),
+                        valid: false
+                    });
+                    updateScanHistory();
+                    alert('❌ Invalid QR Code! Please try again.');
+                    closeConductorQRScanner();
+                }
+            }
+        }
+        
+        function closeConductorQRScanner() {
+            // Stop camera stream
+            if (window.conductorQRStream) {
+                window.conductorQRStream.getTracks().forEach(track => track.stop());
+                window.conductorQRStream = null;
+            }
+            
+            // Remove modal
+            if (window.conductorQRModal) {
+                document.body.removeChild(window.conductorQRModal);
+                window.conductorQRModal = null;
+            }
+        }
+        
+        function emergencyCall() {
+            // Show connecting message
+            const connectingMsg = document.createElement('div');
+            connectingMsg.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: #dc2626;
+                color: white;
+                padding: 20px;
+                border-radius: 12px;
+                text-align: center;
+                z-index: 1000;
+                box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+            `;
+            
+            connectingMsg.innerHTML = `
+                <h3 style="margin: 0 0 10px 0;">🚨 Emergency Call</h3>
+                <p style="margin: 0 0 15px 0;">Connecting to Emergency Services (100)...</p>
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button onclick="confirmEmergencyCall()" style="background: #16a34a; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">Confirm Call</button>
+                    <button onclick="cancelEmergencyCall()" style="background: #6b7280; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">Cancel</button>
+                </div>
+            `;
+            
+            document.body.appendChild(connectingMsg);
+            window.emergencyModal = connectingMsg;
+            
+            // Auto-cancel after 10 seconds if no action
+            setTimeout(() => {
+                if (window.emergencyModal) {
+                    cancelEmergencyCall();
+                }
+            }, 10000);
+        }
+        
+        function confirmEmergencyCall() {
+            if (window.emergencyModal) {
+                document.body.removeChild(window.emergencyModal);
+                window.emergencyModal = null;
+            }
+            
+            alert('🚨 EMERGENCY CALL CONNECTED!\n\nEmergency services have been notified.\nBus location and passenger count have been shared.\n\nStay calm and follow instructions.');
+        }
+        
+        function cancelEmergencyCall() {
+            if (window.emergencyModal) {
+                document.body.removeChild(window.emergencyModal);
+                window.emergencyModal = null;
+            }
+            
+            alert('Emergency call cancelled.');
+        }
+        
+        // Firebase Helper Functions
+        function handlePassengerAdded(passengerData) {
+            verifiedPassengers.add(passengerData.id);
+            scanHistory.push({
+                id: passengerData.id,
+                timestamp: new Date(passengerData.timestamp),
+                valid: true
+            });
+        }
+        
+        function handlePassengerRemoved(passengerId) {
+            verifiedPassengers.delete(passengerId);
+            scanHistory = scanHistory.filter(s => s.id !== passengerId);
+        }
+        
+        function updateBusLocationFromFirebase(locationData) {
+            // Update bus location display if needed
+            console.log('Bus location updated from Firebase:', locationData);
+            
+            // Update map markers
+            if (map && busMarker) {
+                const newLocation = { lat: locationData.latitude, lng: locationData.longitude };
+                busMarker.setPosition(newLocation);
+                map.setCenter(newLocation);
+            }
+        }
+        
+        // Map control functions
+        function centerOnCurrentLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    const location = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    
+                    if (map) {
+                        map.setCenter(location);
+                        map.setZoom(15);
+                    }
+                    
+                    alert('📍 Location centered on your position');
+                });
+            } else {
+                alert('❌ Geolocation not supported');
+            }
+        }
+        
+        function toggleMapView() {
+            // Switch between Google Maps and Leaflet
+            const mapDiv = document.getElementById('map');
+            if (mapDiv) {
+                if (mapDiv.innerHTML.includes('leaflet')) {
+                    // Switch to Google Maps
+                    mapDiv.innerHTML = '';
+                    initGoogleMap();
+                } else {
+                    // Switch to Leaflet
+                    mapDiv.innerHTML = '<div id="leaflet-map" style="width: 100%; height: 200px;"></div>';
+                    setTimeout(() => initLeafletMap(), 100);
+                }
+            }
+        }
+        
+        // Create bus marker
+        function createBusMarker(position) {
+            if (map) {
+                busMarker = new google.maps.Marker({
+                    position: position,
+                    map: map,
+                    title: 'Bus Location',
+                    icon: {
+                        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                            <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="16" cy="16" r="14" fill="#059669" stroke="white" stroke-width="2"/>
+                                <text x="16" y="20" text-anchor="middle" fill="white" font-size="16" font-weight="bold">🚌</text>
+                            </svg>
+                        `),
+                        scaledSize: new google.maps.Size(32, 32),
+                        anchor: new google.maps.Point(16, 16)
+                    },
+                    animation: google.maps.Animation.BOUNCE
+                });
+            }
+        }
+        
+        // Create conductor bus marker
+        function createConductorBusMarker(position) {
+            if (window.conductorMap) {
+                window.conductorBusMarker = new google.maps.Marker({
+                    position: position,
+                    map: window.conductorMap,
+                    title: 'Your Bus Location',
+                    icon: {
+                        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                            <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="20" cy="20" r="18" fill="#059669" stroke="white" stroke-width="3"/>
+                                <text x="20" y="25" text-anchor="middle" fill="white" font-size="20" font-weight="bold">🚌</text>
+                            </svg>
+                        `),
+                        scaledSize: new google.maps.Size(40, 40),
+                        anchor: new google.maps.Point(20, 20)
+                    },
+                    animation: google.maps.Animation.BOUNCE
+                });
+            }
+        }
+        
+        // Create passenger location marker
+        function createPassengerLocationMarker(position) {
+            if (map) {
+                window.passengerMarker = new google.maps.Marker({
+                    position: position,
+                    map: map,
+                    title: 'Your Location',
+                    icon: {
+                        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                            <svg width="30" height="30" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="15" cy="15" r="12" fill="#3b82f6" stroke="white" stroke-width="2"/>
+                                <text x="15" y="19" text-anchor="middle" fill="white" font-size="14" font-weight="bold">📍</text>
+                            </svg>
+                        `),
+                        scaledSize: new google.maps.Size(30, 30),
+                        anchor: new google.maps.Point(15, 15)
+                    }
+                });
+            }
+        }
+        
+        // Create bus route with blue highlighting
+        function createBusRoute() {
+            if (window.conductorMap && directionsService && directionsRenderer) {
+                const route = [
+                    BANGALORE_LOCATIONS.kempegowdaBusStation,
+                    BANGALORE_LOCATIONS.majestic,
+                    BANGALORE_LOCATIONS.mgRoad,
+                    BANGALORE_LOCATIONS.brigadeRoad,
+                    BANGALORE_LOCATIONS.indiranagar
+                ];
+                
+                const request = {
+                    origin: route[0],
+                    destination: route[route.length - 1],
+                    waypoints: route.slice(1, -1).map(loc => ({ location: loc })),
+                    travelMode: google.maps.TravelMode.DRIVING
+                };
+                
+                directionsService.route(request, (result, status) => {
+                    if (status === 'OK') {
+                        directionsRenderer.setDirections(result);
+                        
+                        // Customize the route appearance
+                        directionsRenderer.setOptions({
+                            polylineOptions: {
+                                strokeColor: '#3b82f6',
+                                strokeWeight: 6,
+                                strokeOpacity: 0.8
+                            }
+                        });
+                    }
+                });
+            }
+        }
+        
+        // Create stop markers
+        function createStopMarkers() {
+            if (window.conductorMap) {
+                const stops = [
+                    BANGALORE_LOCATIONS.kempegowdaBusStation,
+                    BANGALORE_LOCATIONS.majestic,
+                    BANGALORE_LOCATIONS.mgRoad,
+                    BANGALORE_LOCATIONS.brigadeRoad,
+                    BANGALORE_LOCATIONS.indiranagar
+                ];
+                
+                stops.forEach((stop, index) => {
+                    new google.maps.Marker({
+                        position: stop,
+                        map: window.conductorMap,
+                        title: stop.name,
+                        icon: {
+                            url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                                <svg width="25" height="25" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="12.5" cy="12.5" r="10" fill="#dc2626" stroke="white" stroke-width="2"/>
+                                    <text x="12.5" y="16" text-anchor="middle" fill="white" font-size="12" font-weight="bold">${index + 1}</text>
+                                </svg>
+                            `),
+                            scaledSize: new google.maps.Size(25, 25),
+                            anchor: new google.maps.Point(12.5, 12.5)
+                        }
+                    });
+                });
+            }
+        }
+        
+        // Center on bus location
+        function centerOnBusLocation() {
+            if (window.conductorMap && window.conductorBusMarker) {
+                const position = window.conductorBusMarker.getPosition();
+                window.conductorMap.setCenter(position);
+                window.conductorMap.setZoom(18);
+                alert('📍 Centered on bus location');
+            } else {
+                alert('❌ Bus location not available');
+            }
+        }
+        
+        // Show next stop
+        function showNextStop() {
+            if (window.conductorMap) {
+                // Example next stop location
+                const nextStop = { lat: 40.7208, lng: -74.0100 };
+                
+                // Create or update next stop marker
+                if (window.nextStopMarker) {
+                    window.nextStopMarker.setPosition(nextStop);
+                } else {
+                    window.nextStopMarker = new google.maps.Marker({
+                        position: nextStop,
+                        map: window.conductorMap,
+                        title: 'Next Stop: Mall Road',
+                        icon: {
+                            url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                                <svg width="30" height="30" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="15" cy="15" r="12" fill="#dc2626" stroke="white" stroke-width="2"/>
+                                    <text x="15" y="19" text-anchor="middle" fill="white" font-size="14" font-weight="bold">🛑</text>
+                                </svg>
+                            `),
+                            scaledSize: new google.maps.Size(30, 30),
+                            anchor: new google.maps.Point(15, 15)
+                        }
+                    });
+                }
+                
+                // Center on next stop
+                window.conductorMap.setCenter(nextStop);
+                window.conductorMap.setZoom(16);
+                alert('🛑 Showing next stop: Mall Road');
+            }
+        }
+        
+        // ----------- UI Update Helpers -----------
+        function updatePassengerCount() {
+            document.querySelector('.passenger-count').textContent = passengerCount;
+        }
+        
+        function updateScanHistory() {
+            const historySection = document.querySelector('.scan-history-section');
+            if (!historySection) return;
+        
+            if (verifiedPassengers.size > 0) {
+                historySection.innerHTML = `
+                    <div class="section-title">Verified Passengers (${verifiedPassengers.size})</div>
+                    <div class="scan-history-list">
+                        ${Array.from(verifiedPassengers).map(id => {
+                            const record = scanHistory.find(r => r.id === id);
+                            return `
+                                <div class="scan-history-item">
+                                    <div class="passenger-info">
+                                        <span>👤</span>
+                                        <span>ID: ${id}</span>
+                                    </div>
+                                    <span>${record?.timestamp.toLocaleTimeString() || 'Unknown'}</span>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+            } else {
+                historySection.innerHTML = '';
+            }
+        }
+        
+        // ----------- Route & Ticket Functions -----------
+        function selectRoute(routeId) {
+            document.querySelectorAll('.bus-option').forEach(option => {
+                option.classList.remove('selected');
+                option.querySelector('input[type="radio"]').checked = false;
+            });
+        
+            const routeElement = document.getElementById(`route-${routeId}`);
+            const radioInput = routeElement.querySelector('input[type="radio"]');
+            routeElement.classList.add('selected');
+            radioInput.checked = true;
+            selectedRoute = routeId;
+        
+            const proceedBtn = document.getElementById('proceed-btn');
+            proceedBtn.disabled = false;
+            proceedBtn.textContent = `Continue with Route ${routeId}`;
+        }
+        
+        function proceedToTicket() {
+            if (selectedRoute) {
+                alert(`Selected Route ${selectedRoute}! Generating your ticket...`);
+                showQRTicket();
+            }
+        }
+        
+        // ----------- Conductor Verification -----------
+        function verifyConductor() {
+            console.log('Verify conductor function called');
+            
+            const conductorId = document.querySelector('input[placeholder="Conductor ID"]').value;
+            const verificationCode = document.querySelector('input[placeholder="Verification Code"]').value;
+            const busNumber = document.querySelector('input[placeholder="Bus Number"]').value;
+            
+            console.log('Input values:', { conductorId, verificationCode, busNumber });
+        
+            const validCredentials = {
+                'COND001': { code: '1234', bus: '25B' },
+                'COND002': { code: '5678', bus: '205' },
+                'COND003': { code: '9999', bus: '101' }
+            };
+        
+            if (validCredentials[conductorId] &&
+                validCredentials[conductorId].code === verificationCode &&
+                validCredentials[conductorId].bus === busNumber) {
+        
+                // Store conductor info
+                currentUser = {
+                    id: conductorId,
+                    role: 'conductor',
+                    busNumber: busNumber,
+                    verified: true
+                };
+                
+                console.log('Credentials valid, proceeding to dashboard');
+                
+                // Update Firebase with conductor login (non-blocking)
+                if (isFirebaseInitialized && realtimeDb) {
+                    realtimeDb.ref('conductor-status').set({
+                        conductorId: conductorId,
+                        busNumber: busNumber,
+                        isActive: true,
+                        loginTime: Date.now()
+                    }).catch(error => {
+                        console.error('Error updating conductor status:', error);
+                    });
+                }
+                
+                alert(`✅ Conductor ${conductorId} verified for Bus ${busNumber}!`);
+                
+                // Navigate to dashboard
+                showScreen('conductor-dashboard');
+                
+                // Update dashboard subtitle
+                const subtitle = document.querySelector('#conductor-dashboard .dashboard-subtitle');
+                if (subtitle) {
+                    subtitle.textContent = `Bus ${busNumber} - Conductor ${conductorId}`;
+                }
+                
+            } else {
+                alert('❌ Invalid credentials! Please check your Conductor ID, Verification Code, and Bus Number.');
+                console.log('Invalid credentials provided');
+            }
+        }
+        
+        // Test function to auto-fill and verify
+        function testVerify() {
+            console.log('Test verify function called');
+            document.querySelector('input[placeholder="Conductor ID"]').value = 'COND001';
+            document.querySelector('input[placeholder="Verification Code"]').value = '1234';
+            document.querySelector('input[placeholder="Bus Number"]').value = '25B';
+            verifyConductor();
+        }
+        
+        // ----------- QR Scanner & Tracking -----------
+        function toggleQRScanner() {
+            qrScannerEnabled = document.getElementById('qr-scanner-toggle').checked;
+            if (qrScannerEnabled) startRealTimeTracking();
+            else stopRealTimeTracking();
+        }
+        
+        function togglePassengerQRScanner() {
+            const scannerEnabled = document.getElementById('passenger-qr-scanner-toggle').checked;
+            const scannerInfo = document.getElementById('scanner-info');
+            const noScannerInfo = document.getElementById('no-scanner-info');
+            const scannerContainer = document.getElementById('qr-scanner-container');
+            
+            if (scannerEnabled) {
+                scannerInfo.style.display = 'block';
+                noScannerInfo.style.display = 'none';
+                scannerContainer.style.display = 'block';
+                // Start camera scanner
+                startQRScanner();
+            } else {
+                scannerInfo.style.display = 'none';
+                noScannerInfo.style.display = 'block';
+                scannerContainer.style.display = 'none';
+                // Stop camera scanner
+                stopQRScanner();
+            }
+        }
+        
+        let qrStream = null;
+        
+        function startQRScanner() {
+            const video = document.getElementById('qr-video');
+            const scannerContainer = document.getElementById('qr-scanner-container');
+            
+            // Show scanner container
+            scannerContainer.style.display = 'block';
+            
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'environment', // Use back camera
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    } 
+                })
+                .then(stream => {
+                    qrStream = stream;
+                    video.srcObject = stream;
+                    video.play();
+                    
+                    // Add loading text
+                    const loadingText = document.createElement('div');
+                    loadingText.id = 'qr-loading';
+                    loadingText.style.cssText = `
+                        position: absolute;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        color: white;
+                        font-size: 14px;
+                        background: rgba(0,0,0,0.7);
+                        padding: 8px 12px;
+                        border-radius: 4px;
+                    `;
+                    loadingText.textContent = 'Camera started - Point at QR code';
+                    scannerContainer.querySelector('div').appendChild(loadingText);
+                    
+                    // Simulate QR detection (in real app, use a QR library like jsQR)
+                    setTimeout(() => {
+                        const loadingEl = document.getElementById('qr-loading');
+                        if (loadingEl) loadingEl.remove();
+                        simulateQRDetection();
+                    }, 3000);
+                })
+                .catch(err => {
+                    console.error('Camera access denied:', err);
+                    alert('❌ Camera access denied. Please allow camera permission to scan QR codes.\n\nTo enable camera:\n1. Click the camera icon in address bar\n2. Allow camera access\n3. Refresh the page');
+                });
+            } else {
+                alert('❌ Camera not supported on this device.');
+            }
+        }
+        
+        function stopQRScanner() {
+            const video = document.getElementById('qr-video');
+            if (qrStream) {
+                qrStream.getTracks().forEach(track => track.stop());
+                qrStream = null;
+                video.srcObject = null;
+            }
+        }
+        
+        function simulateQRDetection() {
+            // Simulate finding a QR code
+            const ticketData = {
+                ticketId: 'TKT' + Date.now(),
+                route: '25B',
+                fare: 25,
+                from: 'Kempegowda Bus Station',
+                to: 'Brigade Road',
+                passenger: 'P' + Math.floor(Math.random() * 1000)
+            };
+            
+            // Store the scanned ticket
+            window.currentTicket = ticketData;
+            
+            // Show success message
+            alert(`✅ QR Code scanned successfully!\nTicket: ${ticketData.ticketId}\nRoute: ${ticketData.route}\nFare: ₹${ticketData.fare}`);
+            
+            // Stop scanner after successful scan
+            stopQRScanner();
+            document.getElementById('qr-scanner-container').style.display = 'none';
+            document.getElementById('passenger-qr-scanner-toggle').checked = false;
+        }
+        
+        function startPassengerBusTracking() {
+            // Simulate automatic bus tracking when QR scanner is enabled
+            alert('🚌 Automatic bus tracking enabled! Your bus location will be updated when you scan your ticket.');
+        }
+        
+        function showStopDistance() {
+            // Show distance to nearest stop when scanner is disabled
+            const distance = (Math.random() * 2 + 0.5).toFixed(1); // Random distance 0.5-2.5 km
+            alert(`📍 Nearest bus stop is ${distance} km away. You can track the bus manually.`);
+        }
+        
+        // Calculate distance from current location to nearest bus stop
+        function calculateDistanceToNearestStop(currentLocation, stops) {
+            let nearestStop = null;
+            let minDistance = Infinity;
+            
+            stops.forEach(stop => {
+                const distance = google.maps.geometry.spherical.computeDistanceBetween(
+                    new google.maps.LatLng(currentLocation.lat, currentLocation.lng),
+                    new google.maps.LatLng(stop.lat, stop.lng)
+                );
+                
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearestStop = stop;
+                }
+            });
+            
+            return {
+                stop: nearestStop,
+                distance: (minDistance / 1000).toFixed(1) // Convert to km
+            };
+        }
+        
+        // Update passenger dashboard with distance to nearest stop
+        function updatePassengerDashboard() {
+            const currentLocation = BANGALORE_LOCATIONS.kempegowdaBusStation; // Default current location
+            const allStops = Object.values(BANGALORE_LOCATIONS);
+            
+            if (typeof google !== 'undefined' && google.maps && google.maps.geometry) {
+                const nearestStopInfo = calculateDistanceToNearestStop(currentLocation, allStops);
+                
+                // Update the passenger dashboard with distance info
+                const distanceInfo = document.createElement('div');
+                distanceInfo.style.cssText = `
+                    background: #f0f9ff; 
+                    border: 1px solid #0ea5e9; 
+                    border-radius: 8px; 
+                    padding: 12px; 
+                    margin-top: 12px; 
+                    font-size: 14px; 
+                    color: #0369a1;
+                    text-align: center;
+                `;
+                distanceInfo.innerHTML = `
+                    📍 You are at: ${currentLocation.name}<br>
+                    🚌 Nearest bus stop: ${nearestStopInfo.stop.name} - ${nearestStopInfo.distance} km away
+                `;
+                
+                // Add to passenger home screen
+                const passengerHome = document.getElementById('passenger-home');
+                const existingDistanceInfo = passengerHome.querySelector('.distance-info');
+                if (existingDistanceInfo) {
+                    existingDistanceInfo.remove();
+                }
+                
+                distanceInfo.className = 'distance-info';
+                const mapContainer = passengerHome.querySelector('.map-container');
+                mapContainer.parentNode.insertBefore(distanceInfo, mapContainer.nextSibling);
+            }
+        }
+        
+        function startRealTimeTracking() {
+            trackingInterval = setInterval(() => { updateBusLocation(); updateStopDistances(); }, 3000);
+        }
+        
+        function stopRealTimeTracking() {
+            if (trackingInterval) clearInterval(trackingInterval);
+        }
+        
+        function updateBusLocation() {
+            document.querySelectorAll('.map-marker').forEach(marker => {
+                if (marker.textContent.includes('Bus Location')) {
+                    marker.innerHTML = `🚌 Bus Location<br><small style="opacity:0.8;">Moving... ${new Date().toLocaleTimeString()}</small>`;
+                }
+            });
+        }
+        
+        function updateStopDistances() {
+            document.querySelectorAll('.stop-item .stop-distance').forEach(item => {
+                if (!item.textContent.includes('✓')) {
+                    const currentDistance = parseFloat(item.textContent);
+                    const newDistance = Math.max(0, currentDistance - (Math.random() * 0.5));
+                    item.textContent = newDistance > 0.1 ? `${newDistance.toFixed(1)} km` : '✓ Arrived';
+                }
+            });
+        }
+        
+        // ----------- Misc -----------
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            const toggleBtn = document.querySelector('.theme-toggle');
+            toggleBtn.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
+        }
+        
+        function addStop() {
+            const stopName = prompt('Enter stop name:');
+            if (stopName) {
+                // Use Google Maps Geocoding to validate the stop
+                if (typeof google !== 'undefined' && google.maps) {
+                    const geocoder = new google.maps.Geocoder();
+                    geocoder.geocode({ address: stopName + ', Bangalore, India' }, (results, status) => {
+                        if (status === 'OK' && results[0]) {
+                            const location = results[0].geometry.location;
+                            const newStop = {
+                                lat: location.lat(),
+                                lng: location.lng(),
+                                name: stopName,
+                                stopNumber: Object.keys(BANGALORE_LOCATIONS).length + 1
+                            };
+                            
+                            // Calculate distance from current bus location
+                            const currentBusLocation = BANGALORE_LOCATIONS.majestic; // Current bus position
+                            const distance = google.maps.geometry.spherical.computeDistanceBetween(
+                                new google.maps.LatLng(currentBusLocation.lat, currentBusLocation.lng),
+                                location
+                            );
+                            const distanceKm = (distance / 1000).toFixed(1);
+                            
+                            // Check if stop is within reasonable distance (5km)
+                            if (distance < 5000) {
+                                // Store stop data for sorting
+                                const stopData = {
+                                    name: stopName,
+                                    distance: parseFloat(distanceKm),
+                                    element: null
+                                };
+                                
+                                // Create stop element
+                                const newStopElement = document.createElement('div');
+                                newStopElement.className = 'stop-item';
+                                newStopElement.innerHTML = `
+                                    <span class="stop-name">${stopName}</span>
+                                    <span class="stop-distance">${distanceKm} km</span>
+                                    <button onclick="removeStop(this)" class="remove-stop">×</button>
+                                `;
+                                
+                                stopData.element = newStopElement;
+                                
+                                // Get all existing stops and add new one
+                                const stopsList = document.querySelector('.stops-list');
+                                const existingStops = Array.from(stopsList.children).map(item => {
+                                    const distanceText = item.querySelector('.stop-distance').textContent;
+                                    const distance = parseFloat(distanceText.replace(' km', ''));
+                                    return {
+                                        element: item,
+                                        distance: distance
+                                    };
+                                });
+                                
+                                // Add new stop to array
+                                existingStops.push(stopData);
+                                
+                                // Sort by distance (ascending)
+                                existingStops.sort((a, b) => a.distance - b.distance);
+                                
+                                // Clear and rebuild the list with proper numbering
+                                stopsList.innerHTML = '';
+                                existingStops.forEach((stop, index) => {
+                                    const stopElement = stop.element;
+                                    const stopNameElement = stopElement.querySelector('.stop-name');
+                                    const originalName = stopNameElement.textContent.replace(/^Stop \d+: /, '');
+                                    stopNameElement.textContent = `Stop ${index + 1}: ${originalName}`;
+                                    stopsList.appendChild(stopElement);
+                                });
+                                
+                                // Add marker to conductor map
+                                if (window.conductorMap) {
+                                    new google.maps.Marker({
+                                        position: location,
+                                        map: window.conductorMap,
+                                        title: `Stop ${newStop.stopNumber}: ${stopName}`,
+                                        icon: {
+                                            url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                                                <svg width="25" height="25" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg">
+                                                    <circle cx="12.5" cy="12.5" r="10" fill="#059669" stroke="white" stroke-width="2"/>
+                                                    <text x="12.5" y="16" text-anchor="middle" fill="white" font-size="12" font-weight="bold">${newStop.stopNumber}</text>
+                                                </svg>
+                                            `),
+                                            scaledSize: new google.maps.Size(25, 25),
+                                            anchor: new google.maps.Point(12.5, 12.5)
+                                        }
+                                    });
+                                }
+                                
+                                alert(`✅ Stop "${stopName}" added successfully!\nDistance: ${distanceKm} km from current location`);
+                            } else {
+                                alert(`❌ Stop "${stopName}" is too far (${distanceKm} km) from the current route. Please add a stop within 5km.`);
+                            }
+                        } else {
+                            alert(`❌ Could not find "${stopName}" in Bangalore. Please enter a valid location name.`);
+                        }
+                    });
+                } else {
+                    // Fallback without Google Maps
+                    const distance = prompt('Enter distance from current location (km):', '2.5');
+                    const stopsList = document.querySelector('.stops-list');
+                    
+                    const newStop = document.createElement('div');
+                    newStop.className = 'stop-item';
+                    newStop.innerHTML = `
+                        <span class="stop-name">${stopName}</span>
+                        <span class="stop-distance">${distance} km</span>
+                    `;
+                    
+                    stopsList.appendChild(newStop);
+                    alert(`✅ Stop "${stopName}" added successfully!`);
+                }
+            }
+        }
+        
+        function removeStop(button) {
+            const stopItem = button.parentElement;
+            const stopName = stopItem.querySelector('.stop-name').textContent;
+            
+            if (confirm(`Remove "${stopName}" from the route?`)) {
+                stopItem.remove();
+                
+                // Reorder remaining stops by distance
+                const stopsList = document.querySelector('.stops-list');
+                const remainingStops = Array.from(stopsList.children).map(item => {
+                    const distanceText = item.querySelector('.stop-distance').textContent;
+                    const distance = parseFloat(distanceText.replace(' km', '').replace('✓ Completed', '0'));
+                    return {
+                        element: item,
+                        distance: distance
+                    };
+                });
+                
+                // Sort by distance (ascending)
+                remainingStops.sort((a, b) => a.distance - b.distance);
+                
+                // Rebuild the list with proper numbering
+                stopsList.innerHTML = '';
+                remainingStops.forEach((stop, index) => {
+                    const stopElement = stop.element;
+                    const stopNameElement = stopElement.querySelector('.stop-name');
+                    const originalName = stopNameElement.textContent.replace(/^Stop \d+: /, '');
+                    stopNameElement.textContent = `Stop ${index + 1}: ${originalName}`;
+                    stopsList.appendChild(stopElement);
+                });
+                
+                alert(`✅ Stop "${stopName}" removed successfully!`);
+            }
+        }
+        
+        function findBuses() {
+            // Get current location and destination from input fields
+            const currentLocation = document.querySelector('input[placeholder="Current Location"]').value;
+            const destination = document.querySelector('input[placeholder="Destination"]').value;
+            
+            // Update destination in input field to match selected route
+            updateRouteOptions(currentLocation, destination);
+            
+            alert(`Searching for buses from ${currentLocation} to ${destination}...`);
+        }
+        
+        // Demo route data with multiple predefined routes
+        const DEMO_ROUTES = [
+            {
+                id: '25B',
+                name: '25B',
+                status: 'Available',
+                stops: ['Kempegowda Bus Station', 'Majestic', 'MG Road', 'Brigade Road', 'Indiranagar'],
+                fare: 25,
+                duration: '45 min',
+                occupancy: 'Medium',
+                frequency: 'Every 10 mins'
+            },
+            {
+                id: '205',
+                name: '205',
+                status: 'Available', 
+                stops: ['Kempegowda Bus Station', 'Majestic', 'Indiranagar', 'Koramangala', 'Jayanagar'],
+                fare: 20,
+                duration: '50 min',
+                occupancy: 'High',
+                frequency: 'Every 15 mins'
+            },
+            {
+                id: '401A',
+                name: '401A',
+                status: 'Available',
+                stops: ['Kempegowda Bus Station', 'MG Road', 'Brigade Road', 'Commercial Street', 'Ulsoor'],
+                fare: 30,
+                duration: '35 min',
+                occupancy: 'Low',
+                frequency: 'Every 8 mins'
+            },
+            {
+                id: '500C',
+                name: '500C',
+                status: 'Available',
+                stops: ['Kempegowda Bus Station', 'Majestic', 'Cubbon Park', 'Vidhana Soudha', 'Bangalore Palace'],
+                fare: 35,
+                duration: '40 min',
+                occupancy: 'Medium',
+                frequency: 'Every 12 mins'
+            },
+            {
+                id: '600D',
+                name: '600D',
+                status: 'Available',
+                stops: ['Kempegowda Bus Station', 'MG Road', 'Koramangala', 'HSR Layout', 'Electronic City'],
+                fare: 40,
+                duration: '60 min',
+                occupancy: 'High',
+                frequency: 'Every 20 mins'
+            }
+        ];
+
+        function updateRouteOptions(currentLocation, destination) {
+            // Update route options to show routes that go to the destination
+            // Find the passenger interface container
+            const passengerScreen = document.getElementById('passenger-home');
+            if (!passengerScreen) return;
+            
+            const routeContainer = passengerScreen.querySelector('.dashboard-content');
+            if (!routeContainer) return;
+            
+            const existingRoutes = routeContainer.querySelectorAll('.bus-option');
+            existingRoutes.forEach(route => route.remove());
+            
+            // Create modified routes with destination as last stop
+            const modifiedRoutes = DEMO_ROUTES.map(route => {
+                // Create a new route with destination as the last stop
+                const newStops = [...route.stops];
+                // Replace the last stop with destination if it's not already there
+                if (!newStops.includes(destination)) {
+                    newStops[newStops.length - 1] = destination;
+                }
+                
+                return {
+                    ...route,
+                    stops: newStops
+                };
+            });
+            
+            const routesToShow = modifiedRoutes;
+            
+            // Create route options dynamically
+            routesToShow.forEach((route, index) => {
+                const routeElement = document.createElement('div');
+                routeElement.className = 'bus-option';
+                routeElement.id = `route-${route.id}`;
+                routeElement.onclick = () => selectRoute(route.id);
+                
+                const lastStop = route.stops[route.stops.length - 1];
+                const routeStops = route.stops.join(' → ');
+                
+                routeElement.innerHTML = `
+                    <div class="bus-option-header">
+                        <div class="route-info">
+                            <div class="route-number">${route.name}</div>
+                            <div class="route-status">${route.occupancy} Occupancy</div>
+                        </div>
+                        <div class="route-selector">
+                            <input type="radio" name="route" value="${route.id}" id="radio-${route.id}">
+                            <label for="radio-${route.id}"></label>
+                        </div>
+                    </div>
+                    <div class="route-details">
+                        <div class="route-stops">${routeStops}</div>
+                        <div class="route-info-grid">
+                            <div class="info-item" style="background: #fef3c7; border: 2px solid #f59e0b;">
+                                <span class="info-label" style="color: #92400e; font-weight: 700;">💰 Fare:</span>
+                                <span class="info-value" style="color: #92400e; font-weight: 800; font-size: 16px;">₹${route.fare}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Duration:</span>
+                                <span class="info-value">${route.duration}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Next Bus:</span>
+                                <span class="info-value">${Math.floor(Math.random() * 10) + 1} min</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Destination:</span>
+                                <span class="info-value">${lastStop}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                routeContainer.appendChild(routeElement);
+            });
+        }
+        
+        function proceedToTicket() {
+            if (selectedRoute) {
+                alert(`Selected Route ${selectedRoute}! Generating your ticket...`);
+                showQRTicket();
+            }
+        }
+        
+        // Start app function
+        function startApp() {
+            // Add loading animation
+            const startButton = document.querySelector('.start-button');
+            const originalText = startButton.textContent;
+            
+            startButton.textContent = 'Starting...';
+            startButton.style.opacity = '0.7';
+            
+            setTimeout(() => {
+                showScreen('role-selection');
+                // Initialize dynamic routes
+                updateRouteOptions('Kempegowda Bus Station', 'MG Road');
+                
+                // Reset button
+                startButton.textContent = originalText;
+                startButton.style.opacity = '1';
+            }, 1500);
+        }
+
+        // Fullscreen functionality
+        function toggleFullscreen(mapId) {
+            const mapElement = document.getElementById(mapId);
+            const isFullscreen = mapElement.classList.contains('map-fullscreen');
+            
+            if (isFullscreen) {
+                // Exit fullscreen
+                mapElement.classList.remove('map-fullscreen');
+                document.body.style.overflow = 'auto';
+                
+                // Remove close button
+                const closeBtn = document.querySelector('.fullscreen-close-btn');
+                if (closeBtn) {
+                    closeBtn.remove();
+                }
+            } else {
+                // Enter fullscreen
+                mapElement.classList.add('map-fullscreen');
+                document.body.style.overflow = 'hidden';
+                
+                // Add close button only once
+                const existingCloseBtn = document.querySelector('.fullscreen-close-btn');
+                if (!existingCloseBtn) {
+                    const closeBtn = document.createElement('button');
+                    closeBtn.className = 'fullscreen-close-btn';
+                    closeBtn.innerHTML = '✕';
+                    closeBtn.onclick = () => toggleFullscreen(mapId);
+                    document.body.appendChild(closeBtn);
+                }
+            }
+        }
+
+        // Add ESC key support for exiting fullscreen
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                const fullscreenMap = document.querySelector('.map-fullscreen');
+                if (fullscreenMap) {
+                    const mapId = fullscreenMap.id;
+                    toggleFullscreen(mapId);
+                }
+            }
+        });
+
+        // Back button navigation function
+        function goBack() {
+            const currentScreen = document.querySelector('.screen:not(.hidden)');
+            if (!currentScreen) return;
+            
+            const currentScreenId = currentScreen.id;
+            console.log('Going back from:', currentScreenId);
+            
+            // Define navigation flow
+            const navigationFlow = {
+                'login-screen': 'role-selection',
+                'conductor-verification': 'role-selection',
+                'conductor-dashboard': 'conductor-verification',
+                'passenger-home': 'role-selection',
+                'qr-ticket': 'passenger-home',
+                'live-tracking': 'passenger-home'
+            };
+            
+            const previousScreen = navigationFlow[currentScreenId];
+            if (previousScreen) {
+                showScreen(previousScreen);
+                console.log('Navigated to:', previousScreen);
+            } else {
+                // Default fallback to role selection
+                showScreen('role-selection');
+                console.log('Default navigation to role-selection');
+            }
+        }
+
+        // ----------- PWA Service Worker Registration -----------
+        if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(registration => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch(registrationError => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+
+        // ----------- PWA Install Button Logic -----------
+        let deferredPrompt;
+        const installButton = document.getElementById('pwa-install-btn');
+
+        // Listen for the beforeinstallprompt event
+        window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('PWA install prompt triggered');
+            e.preventDefault();
+            deferredPrompt = e;
+            installButton.classList.add('show');
+        });
+
+        // Show install modal
+        function showInstallModal() {
+            const modal = document.getElementById('install-modal');
+            modal.classList.add('show');
+        }
+
+        // Close install modal
+        function closeInstallModal() {
+            const modal = document.getElementById('install-modal');
+            modal.classList.remove('show');
+        }
+
+        // Handle install button click
+        if (installButton) {
+            installButton.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                // Show the install prompt
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`User response to the install prompt: ${outcome}`);
+                deferredPrompt = null;
+                installButton.classList.remove('show');
+            } else {
+                // Show instructions modal
+                showInstallModal();
+            }
+            });
+        }
+
+        // Listen for successful installation
+        window.addEventListener('appinstalled', () => {
+            console.log('PWA was installed successfully');
+            if (installButton) {
+                installButton.classList.remove('show');
+            }
+            // Show success message
+            alert('🎉 Bus-Raahi installed successfully! You can now access it from your home screen.');
+        });
+
+        // Check if app is already installed
+        if (window.matchMedia('(display-mode: standalone)').matches) {
+            console.log('App is running in standalone mode');
+            if (installButton) {
+                installButton.style.display = 'none';
+            }
+        }
+
+        // ----------- Initialize App -----------
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 DOM Content Loaded - Initializing app');
+            
+            // Initialize Firebase first
+            initializeFirebase();
+            
+            // Start tagline animation immediately
+            console.log('🔥 About to start tagline animation...');
+            startTaglineAnimation();
+            
+            // Also start animation after a delay to ensure elements exist
+            setTimeout(() => {
+                console.log('🔥 Starting delayed tagline animation...');
+                startTaglineAnimation();
+            }, 1000);
+            
+            // Initialize maps
+            setTimeout(() => {
+                initLeafletMap();
+                // Initialize Google Maps after a delay to ensure API is loaded
+                setTimeout(() => {
+                    if (typeof google !== 'undefined' && google.maps) {
+                        initGoogleMap();
+                        // Update passenger dashboard with distance info
+                        setTimeout(() => {
+                            updatePassengerDashboard();
+                        }, 1000);
+                    }
+                }, 2000);
+            }, 1000);
+            
+            showScreen('splash-screen');
+            
+            // Force start animation after everything loads
+            setTimeout(() => {
+                console.log('🔥 FORCE starting tagline animation...');
+                const splashTaglineElement = document.getElementById('splash-tagline');
+                const headerTaglineElement = document.getElementById('tagline');
+                console.log('Splash element:', !!splashTaglineElement);
+                console.log('Header element:', !!headerTaglineElement);
+                if (splashTaglineElement || headerTaglineElement) {
+                    startTaglineAnimation();
+                }
+            }, 2000);
+            
+            // Test verify function availability
+            console.log('verifyConductor function available:', typeof verifyConductor);
+        });
+        
+        // Global error handler
+        window.addEventListener('error', function(e) {
+            console.error('JavaScript Error:', e.error);
+            console.error('Error details:', e.filename, e.lineno, e.colno);
+        });
+    </script>
+        </div>
+    </div>
+
+    <!-- PWA Install Button -->
+    <button class="pwa-install-btn" id="pwa-install-btn" onclick="showInstallModal()">
+        <span class="install-icon">📱</span>
+        Install App
+    </button>
+
+    <!-- Install Instructions Modal -->
+    <div class="install-modal" id="install-modal">
+        <div class="install-content">
+            <h3>📱 Install Bus-Raahi</h3>
+            <p>Get the full app experience with offline access and faster loading!</p>
+            
+            <div class="install-steps">
+                <div class="install-step">
+                    <div class="step-number">1</div>
+                    <div>
+                        <strong>Chrome/Edge:</strong> Click the install icon in address bar
+                    </div>
+                </div>
+                <div class="install-step">
+                    <div class="step-number">2</div>
+                    <div>
+                        <strong>Safari (iOS):</strong> Tap Share → Add to Home Screen
+                    </div>
+                </div>
+                <div class="install-step">
+                    <div class="step-number">3</div>
+                    <div>
+                        <strong>Android:</strong> Tap Menu → Add to Home Screen
+                    </div>
+                </div>
+            </div>
+            
+            <button class="close-install-modal" onclick="closeInstallModal()">Got it!</button>
+        </div>
+    </div>
+</body>
+</html>
